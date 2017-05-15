@@ -1,16 +1,22 @@
+ODIR = build
+SDIR = src
+
 #Stampa informazioni gruppo e progetto
 help: 
-	echo "----------------------------\n\nAndrea Filippi 181598 \nMatteo Dal Ponte 181390 \nSimone Bernabè 181046\n\n---------------------------\n\nProgetto 2 CountDown LED\n Programma C che utilizzando la sicnronizazzione tra processi crea un conto alla rovescia con i parametri letti in ingresso"
+	@echo "----------------------------\n\nAndrea Filippi 181598 \nMatteo Dal Ponte 181390 \nSimone Bernabè 181046\n\n---------------------------\n\nProgetto 2 CountDown LED\n Programma C che utilizzando la sicnronizazzione tra processi crea un conto alla rovescia con i parametri letti in ingresso"
 
 #Elimina file oggetto e assets nella cartella build
-clean: 
+clean:
+	@rm -rf build && if [ -d "assets" ]; then rm -rf assets; fi && echo "Build e Assets eliminate! "
 
 #Deve creare la cartella build con dentro il file eseguibile
-build: 
+build: $(SDIR)/progetto.c $(SDIR)/progetto.h
+	@mkdir build && @gcc $(SDIR)/progetto.c $(SDIR)/progetto.h -o countdown  && mv countdown  build/
 
-#OPZIONALE- Chiama build e crea una cartella assets con i file di supporto
-assets: 
+#OPZIONALE - Chiama build e crea una cartella assets con i file di supporto
+assets:  
+	make build && mkdir assets 
 
-#Esegue il progetto in modalità TEST richiamando prima "assets"
+#OPZIONALE - Esegue il progetto in modalità TEST richiamando prima "assets"
 test: 
-
+	make assets && echo "TESTING"
