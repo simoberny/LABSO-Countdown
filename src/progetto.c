@@ -10,6 +10,7 @@ int main(int argc, char *argv[]){
 	int secondi = -1;
 
 
+
 	do{
 		printf("\nComandi disponibili: \n-start <secondi>: Avvio countdown\n-elapsed: Secondi rimasti\n-stop: Ferma il conto alla rovescia\n-tens: Decine\n-units: Unità\n-quit\n");
 		printf("-----------------\n Run \n-----------------\n");
