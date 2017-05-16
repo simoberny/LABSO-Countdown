@@ -1,0 +1,6 @@
+Comandi utili git:
+
+- git clone http://..... 
+- git add "file" Per aggiungere un file al repository
+- git commit "file" "file2"...  per far notare a git le modifiche che avete apportato
+- git push origin master   Per caricare su github tutti i file modificati nel Branch master
