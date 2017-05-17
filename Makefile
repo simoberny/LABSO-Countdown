@@ -10,8 +10,8 @@ clean:
 	@rm -rf build && if [ -d "assets" ]; then rm -rf assets; fi && echo "Build e Assets eliminate! "
 
 #Deve creare la cartella build con dentro il file eseguibile
-build: $(SDIR)/progetto.c $(SDIR)/progetto.h
-	@mkdir build && @gcc $(SDIR)/progetto.c $(SDIR)/progetto.h -o countdown  && mv countdown  build/
+build: $(SDIR)/progetto.c $(SDIR)/progetto.h $(SDIR)/units.c $(SDIR)/tens.c
+	@mkdir build && gcc $(SDIR)/progetto.c $(SDIR)/progetto.h -o countdown  && mv countdown  build/ && gcc $(SDIR)/units.c -o units && gcc $(SDIR)/tens.c -o tens
 
 #OPZIONALE - Chiama build e crea una cartella assets con i file di supporto
 assets:  
