@@ -4,6 +4,21 @@
 #include <sys/types.h>
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
+#include <time.h>
+
+int unita = 0;
+
+void countdown(){
+	while(unita >= 0){
+		if(unita == 0){
+			unita = 9;	
+			// INVIO SEGNALE	
+		}
+		sleep(1);
+		unita--;
+	}
+
+}
 
 int readLine(int fd, char *str){
 	int n; 
@@ -18,8 +33,11 @@ int main(){
 	int fd_units_in;
 	int fd_units_out;
 
+	char unita_str[10];
+
 	char str[100];
 	char message[100];
+
 	do {
 		fd_units_out = open ("units_pipe_in", O_WRONLY);
 	} while (fd_units_out == -1);
@@ -31,8 +49,16 @@ int main(){
 
 	while (readLine (fd_units_in, str)) {
 		sprintf(message, "%s", str);
+			
+		if(strncmp(message, "units", 5) == 0){
+			sscanf(message, "units %d", &unita);
+			write (fd_units_out, message, strlen(message) + 1);
+			countdown();
+		}else if(strcmp(message, "elapsed") == 0){
+			sprintf(unita_str, "%d", unita);
+			write (fd_units_out, unita_str, strlen(unita_str) + 1);
+		}
 
-		write (fd_units_out, message, strlen(message) + 1);
 	}
 
 	close(fd_units_in);
