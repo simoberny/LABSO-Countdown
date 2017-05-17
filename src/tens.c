@@ -16,13 +16,15 @@ int readLine(int fd, char *str){
 int main(){
 	int fd;
 	char str[100];
-	unlink("units_pipe");
-	mknod ("units_pipe", S_IFIFO, 0);
-	chmod ("units_pipe", 0660); 
-	fd = open ("units_pipe", O_RDONLY);
+	char message[100];
+	unlink("tens_pipe");
+	mknod ("tens_pipe", S_IFIFO, 0);
+	chmod ("tens_pipe", 0660); 
+	fd = open ("tens_pipe", O_RDONLY);
 	while (readLine (fd, str)) 
-		system("touch secondi.txt");
+		sprintf(message, "touch tens.txt && echo '%s' >> tens.txt", str);
+		system(message);
 	close (fd);
-	unlink("units_pipe");
+	unlink("tens_pipe");
 }
 
