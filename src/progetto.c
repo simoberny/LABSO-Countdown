@@ -72,17 +72,6 @@ void start(int sec){
 
 	write (fd_tens_out, strout_tens, strlen(strout_tens) + 1);
 	write (fd_units_out, strout_units, strlen(strout_units) + 1);
-
-	
-	sleep(1);
-
-	while(readLine(fd_tens_in, strin_tens)){
-		printf("Messaggio ricevuto dalle decine: %s\n", strin_tens);
-	}
-
-	while(readLine(fd_units_in, strin_units)){
-		printf("Messaggio ricevuto dalle unità: %s\n", strin_units);
-	}
 }
 
 void elapsed(){
