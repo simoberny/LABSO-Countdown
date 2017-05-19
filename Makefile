@@ -14,12 +14,10 @@ build: $(SDIR)/progetto.c $(SDIR)/progetto.h $(SDIR)/units.c $(SDIR)/tens.c
 	@mkdir build && \
 	gcc $(SDIR)/progetto.c $(SDIR)/progetto.h -o countdown && \
 	gcc $(SDIR)/tens.c -o tens && \
-	gcc $(SDIR)/units.c -o units && \
-	gcc $(SDIR)/counttest.c -o counttest && \
+	gcc $(SDIR)/units.c -o units
 	mv countdown  build/ && \
 	mv tens build/ && \
-	mv units build/ && \
-	mv counttest build/
+	mv units build/
 
 #OPZIONALE - Chiama build e crea una cartella assets con i file di supporto
 assets:  
