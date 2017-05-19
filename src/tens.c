@@ -17,9 +17,10 @@ int readLine(int fd, char *str){
 }
 
 void countHandler (int sig) {
-	
-	decine--;
-	printf("\nDecremento decine: %d\n", decine);	
+	if(decine > 0){
+		decine--;
+		printf("\nDecremento decine: %d\n", decine);
+	}
 }
 
 int getExPid(char* process){

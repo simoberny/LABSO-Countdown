@@ -19,7 +19,6 @@ int readLine(int fd, char *str){
 }
 
 void countHandler (int sig) {
-	unita = 0;
 	decine = 0;
 }
 
@@ -72,25 +71,25 @@ int main(){
 				write (fd_units_out, unita_str, strlen(unita_str) + 1);
 			}
 		}
-		if(decine > 0){
 
+		if(decine > 0){
 			if(unita == 0){
 				kill(getExPid("tens"), 17);
 				unita = 10;
 			}
+		}else if(decine){
+			unita = 10;
+		}
 
-			if(unita > 0){
-				end = clock();
-				int diff = ((end - start)/CLOCKS_PER_SEC);
-				if((diff - prevdiff) >= 1){
-					unita = unita - (diff - prevdiff);
-					printf("Unità: %d\n", unita);
-					prevdiff = diff;
-				}
+		if(unita > 0){
+			end = clock();
+			int diff = ((end - start)/CLOCKS_PER_SEC);
+			if((diff - prevdiff) >= 1){
+				unita = unita - (diff - prevdiff);
+				printf("Unità: %d\n", unita);
+				prevdiff = diff;
 			}
 		}
-		
-
 	}
 
 
