@@ -6,6 +6,8 @@
 #include <fcntl.h>
 
 int decine = -1;
+int fd_tens_in;
+int fd_tens_out;
 
 int readLine(int fd, char *str){
 	int n; 
@@ -36,13 +38,17 @@ int getExPid(char* process){
 	return buf;
 }
 
+void closeAll(){
+	close(fd_tens_in);
+	close (fd_tens_out);
+	unlink("tens_pipe_out");
+	exit(0);
+}
+
 
 int main(){
 	void countHandler (int);
 	signal (17, countHandler);
-
-	int fd_tens_in;
-	int fd_tens_out;
 
 	char decine_str[10];
 
@@ -71,12 +77,8 @@ int main(){
 
 		if(decine == 0){
 			kill(getExPid("units"), 18);
+			closeAll();
 		}
-	}
-
-	close(fd_tens_in);
-	close (fd_tens_out);
-	unlink("tens_pipe_out");
-	
+	}	
 }
 
