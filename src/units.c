@@ -18,8 +18,8 @@ int readLine(int fd, char *str){
 	return n>0;
 }
 
-void countHandler (int sig) {
-	decine = 0;
+void countHandler (int sig) { // Funzione che gestisce il segnale che manda le decine quando sono finite
+	decine = 0; // Permette alle unità di eseguire un ultimo ciclo
 }
 
 int getExPid(char* process){
@@ -73,15 +73,15 @@ int main(){
 		}
 
 		if(decine > 0){
-			if(unita == 0){
+			if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
 				kill(getExPid("tens"), 17);
-				unita = 10;
+				unita = 10; // E aggiorno le unità per ripartire
 			}
 		}else if(decine){
-			unita = 10;
+			unita = 10; //Aggiorno le decine per l'ultima volta
 		}
 
-		if(unita > 0){
+		if(unita > 0){ //Se ci sono unità le decremento 
 			end = clock();
 			int diff = ((end - start)/CLOCKS_PER_SEC);
 			if((diff - prevdiff) >= 1){
