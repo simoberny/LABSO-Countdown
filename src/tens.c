@@ -16,7 +16,31 @@ int readLine(int fd, char *str){
 	return n>0;
 }
 
+int getExPid(char* process){
+	char comand[29];
+	sprintf(comand, "pidof -s %s", process);
+
+	FILE *ls = popen(comand, "r");
+	char buf[256];
+	while (fgets(buf, sizeof(buf), ls) != 0) {
+   	 	//printf("\n PID ( %s ) : %s", process, buf);
+	}
+	pclose(ls);
+}
+
+void unitsHandler (int sig) { /* Executed if the child dies */
+	printf("\nTENS, unitsHandler\n");
+	decine--;
+	printf("\ndecine: %d\n", decine);
+	if(decine==0){
+		printf("decine finite!\n");
+	}
+}
+
 int main(){
+	void unitsHandler (int);
+	signal (16, unitsHandler);
+	
 	int fd_tens_in;
 	int fd_tens_out;
 

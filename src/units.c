@@ -1,4 +1,4 @@
-#include <stdio.h>
+	#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
@@ -7,17 +7,19 @@
 #include <time.h>
 
 int unita = 0;
+int tensPid = 0;
+int counttestPid = 0;
 
-void countdown(){
-	while(unita >= 0){
-		if(unita == 0){
-			unita = 9;	
-			// INVIO SEGNALE	
-		}
-		sleep(1);
-		unita--;
+int getExPid(char* process){
+	char comand[29];
+	sprintf(comand, "pidof -s %s", process);
+
+	FILE *ls = popen(comand, "r");
+	char buf[256];
+	while (fgets(buf, sizeof(buf), ls) != 0) {
+   	 	//printf("\n PID ( %s ) : %s", process, buf);
 	}
-
+	pclose(ls);
 }
 
 int readLine(int fd, char *str){
@@ -29,8 +31,30 @@ int readLine(int fd, char *str){
 	return n>0;
 }
 
+void countHandler (int sig) { /* Executed if the child dies */
+	printf("\nUNITS, countHandler\n");
+	if (unita>0) unita--;
+	printf("\nsecondi: %d\n", unita);
+	if(unita == 0){
+		printf("unità finite\n");
+		kill(counttestPid,6);
+		kill(tensPid, 16);
+	}
+	/*if (decine>=0) {
+		if (decine!=0)decine--;
+		kill(getExPid("units"), 18);
+	}*/
+	//printf("\nsegnale ricevuto,  secondi: %d",  unita);
+}
+
 int main(){
-	int fd_units_in;
+	tensPid=getExPid("tens");
+	counttestPid=getExPid("counttest");
+	//dichiaro l' handler per i segnali
+	void countHandler (int);
+	signal (16, countHandler);
+
+	int fd_units_in;	
 	int fd_units_out;
 
 	char unita_str[10];
@@ -53,7 +77,14 @@ int main(){
 		if(strncmp(message, "units", 5) == 0){
 			sscanf(message, "units %d", &unita);
 			write (fd_units_out, message, strlen(message) + 1);
-			countdown();
+			if(unita>0){
+				char counttest[100];
+				sprintf(counttest, "./counttest %d %d &", unita, getpid());
+				printf("\n%s", counttest);
+				system(counttest);
+				//unita =0;
+			}
+
 		}else if(strcmp(message, "elapsed") == 0){
 			sprintf(unita_str, "%d", unita);
 			write (fd_units_out, unita_str, strlen(unita_str) + 1);
