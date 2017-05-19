@@ -8,6 +8,8 @@
 
 int unita = -1;
 int decine = 1;
+int fd_units_in;
+int fd_units_out;
 
 int readLine(int fd, char *str){
 	int n; 
@@ -35,12 +37,18 @@ int getExPid(char* process){
 	return buf;
 }
 
+void closeAll(){
+	close(fd_units_in);
+	close (fd_units_out);
+	unlink("units_pipe_out");
+	printf("-----------------\n Run \n-----------------\n");
+	exit(0);
+}
+
 int main(){
 	void countHandler (int);
 	signal (18, countHandler);
 
-	int fd_units_in;
-	int fd_units_out;
 	clock_t start, end;
 	int prevdiff = 0;
 	char unita_str[10];
@@ -90,12 +98,10 @@ int main(){
 				prevdiff = diff;
 			}
 		}
+
+		if(decine == 0 && unita == 0){
+			closeAll();
+		}
 	}
-
-
-	close(fd_units_in);
-	close (fd_units_out);
-	unlink("units_pipe_out");
-	
 }
 
