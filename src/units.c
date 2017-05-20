@@ -4,7 +4,6 @@
 #include <sys/types.h>
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
-#include <time.h>
 
 int unita = -1;
 int decine = 1;
@@ -48,9 +47,7 @@ void closeAll(){
 int main(){
 	void countHandler (int);
 	signal (18, countHandler);
-
-	clock_t start, end;
-	int prevdiff = 0;
+	
 	char unita_str[10];
 
 	char str[100];
@@ -72,8 +69,6 @@ int main(){
 			
 			if(strncmp(message, "units", 5) == 0){
 				sscanf(message, "units %d", &unita);
-				write (fd_units_out, message, strlen(message) + 1);
-				start = clock();
 			}else if(strcmp(message, "elapsed") == 0){
 				sprintf(unita_str, "%d", unita);
 				write (fd_units_out, unita_str, strlen(unita_str) + 1);
@@ -90,13 +85,9 @@ int main(){
 		}
 
 		if(unita > 0){ //Se ci sono unità le decremento 
-			end = clock();
-			int diff = ((end - start)/CLOCKS_PER_SEC);
-			if((diff - prevdiff) >= 1){
-				unita = unita - (diff - prevdiff);
-				printf("Unità: %d\n", unita);
-				prevdiff = diff;
-			}
+			sleep(1);
+			unita -= 1;
+			printf("Unità: %d\n", unita);
 		}
 
 		if(decine == 0 && unita == 0){
