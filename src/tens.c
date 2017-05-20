@@ -23,6 +23,11 @@ void countHandler (int sig) {
 		decine--;
 		printf("\nDecremento decine: %d\n", decine);
 	}
+
+	if(decine == 0){
+		kill(getExPid("units"), 18);
+		closeAll();
+	}
 }
 
 int getExPid(char* process){
@@ -54,31 +59,25 @@ int main(){
 
 	char str[100];
 	char message[100];
+
 	do {
 		fd_tens_out = open ("tens_pipe_in", O_WRONLY);
 	} while (fd_tens_out == -1);
+
 	unlink("tens_pipe_out");
 	mknod ("tens_pipe_out", S_IFIFO, 0);
 	chmod ("tens_pipe_out", 0660); 
-	fd_tens_in = open ("tens_pipe_out", O_NONBLOCK);
+	fd_tens_in = open ("tens_pipe_out", O_RDONLY);
 	
-	while(1){
-		if (readLine (fd_tens_in, str)) {
-			sprintf(message, "%s", str);
+	while(readLine (fd_tens_in, str)) {
+		sprintf(message, "%s", str);
 
-			if(strncmp(message, "tens", 4) == 0){
-				sscanf(message, "tens %d", &decine);
-				write (fd_tens_out, message, strlen(message) + 1);
-			}else if(strcmp(message, "elapsed") == 0){
-				sprintf(decine_str, "%d", decine);
-				write (fd_tens_out, decine_str, strlen(decine_str) + 1);
-			}
+		if(strncmp(message, "tens", 4) == 0){
+			sscanf(message, "tens %d", &decine);
+		}else if(strcmp(message, "elapsed") == 0){
+			sprintf(decine_str, "%d", decine);
+			write (fd_tens_out, decine_str, strlen(decine_str) + 1);
 		}
-
-		if(decine == 0){
-			kill(getExPid("units"), 18);
-			closeAll();
-		}
-	}	
+	}
 }
 
