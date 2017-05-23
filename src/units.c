@@ -32,8 +32,10 @@ int pid;
 				int bytesRead = read(fds[i][READ], messag, 100);
 				int valore=0;
 				sscanf(messag, "Numero: %d", &valore);
-				//printf("Figlio %d -> Read %d Numero: %d  on o off?? %d\n", i, bytesRead, valore,segmenti[valore][i]);								
-				
+				//printf("Figlio %d -> Read %d Numero: %d  on o off?? %d\n", i, bytesRead, valore,segmenti[valore][i]);
+				char str[100];
+				sprintf(str, "echo '%d'> units_%d", segmenti[valore][i]==1,i);				
+				system(str);
 			}
 
 			exit(0);
