@@ -11,6 +11,7 @@ int fd_tens_out;
 
 int readLine(int fd, char *str){
 	int n; 
+	
 	do{
 		n = read(fd, str, 1);
 	}while(n>0 && *str++ != '\0');
@@ -71,9 +72,9 @@ int main(){
 	
 	while(readLine (fd_tens_in, str)) {
 		sprintf(message, "%s", str);
-
 		if(strncmp(message, "tens", 4) == 0){
 			sscanf(message, "tens %d", &decine);
+			if(decine == 0) kill(getExPid("units"), 18);	// unità già nell' ultimo giro, decine gia finite (tutti i casi val <10)
 		}else if(strcmp(message, "elapsed") == 0){
 			sprintf(decine_str, "%d", decine);
 			write (fd_tens_out, decine_str, strlen(decine_str) + 1);

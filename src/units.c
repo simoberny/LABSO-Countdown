@@ -16,6 +16,8 @@ int fd_units_out;
 pid_t pidFiglio[7];
 int fds[7][2];
 
+const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
+
 void creazioneFigli(){
 
 int pid;
@@ -28,7 +30,10 @@ int pid;
 			char messag[100];
 			while (1){
 				int bytesRead = read(fds[i][READ], messag, 100);
-				printf("Figlio %d -> Read %d bytes: %s\n", i, bytesRead, messag);
+				int valore=0;
+				sscanf(messag, "Numero: %d", &valore);
+				//printf("Figlio %d -> Read %d Numero: %d  on o off?? %d\n", i, bytesRead, valore,segmenti[valore][i]);								
+				
 			}
 
 			exit(0);
@@ -46,7 +51,7 @@ int readLine(int fd, char *str){
 }
 
 void countHandler (int sig) { // Funzione che gestisce il segnale che manda le decine quando sono finite
-	decine = 0; // Permette alle unità di eseguire un ultimo ciclo
+	decine = 0; // Permette alle unità di eseguire un ultimo ciclo	
 }
 
 int getExPid(char* process){
@@ -101,13 +106,11 @@ int main(){
 			}
 		}
 
-		if(decine > 0){
+		if(decine > 0){			
 			if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
 				kill(getExPid("tens"), 17);
 				unita = 10; // E aggiorno le unità per ripartire
 			}
-		}else if(decine){
-			unita = 10; //Aggiorno le decine per l'ultima volta
 		}
 
 		if(unita > 0){ //Se ci sono unità le decremento 
