@@ -5,10 +5,36 @@
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
 
+#define READ 0
+#define WRITE 1
+
 int unita = -1;
 int decine = 1;
 int fd_units_in;
 int fd_units_out;
+
+pid_t pidFiglio[7];
+int fds[7][2];
+
+void creazioneFigli(){
+
+int pid;
+	for(int i = 0; i<7; i++){
+		pipe(fds[i]);
+		pid = fork();
+
+		if (pid==0){
+			pidFiglio[i] = getpid();
+			char messag[100];
+			while (1){
+				int bytesRead = read(fds[i][READ], messag, 100);
+				printf("Figlio %d -> Read %d bytes: %s\n", i, bytesRead, messag);
+			}
+
+			exit(0);
+		}	
+	}
+}
 
 int readLine(int fd, char *str){
 	int n; 
@@ -62,13 +88,13 @@ int main(){
 	chmod ("units_pipe_out", 0660); 
 	fd_units_in = open ("units_pipe_out", O_NONBLOCK);
 
-	while(1){
-		
+	while(1){	
 		if (readLine (fd_units_in, str)) {
 			sprintf(message, "%s", str);
-			
+	
 			if(strncmp(message, "units", 5) == 0){
 				sscanf(message, "units %d", &unita);
+				creazioneFigli();
 			}else if(strcmp(message, "elapsed") == 0){
 				sprintf(unita_str, "%d", unita);
 				write (fd_units_out, unita_str, strlen(unita_str) + 1);
@@ -88,6 +114,15 @@ int main(){
 			sleep(1);
 			unita -= 1;
 			printf("Unità: %d\n", unita);
+
+			//Scrivo nelle pipe anonime del figlio
+
+			char msgPip[100];
+			sprintf(msgPip, "Numero: %d", unita);
+
+			for(int i = 0; i < 7; i++){
+				write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
+			}
 		}
 
 		if(decine == 0 && unita == 0){
