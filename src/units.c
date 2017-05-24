@@ -63,7 +63,7 @@ int getExPid(char* process){
 	FILE *ls = popen(comand, "r");
 	char buf[256];
 	while (fgets(buf, sizeof(buf), ls) != 0) {
-   	 	//printf("\n PID ( %s ) : %s", process, buf);
+   	 	printf("\n PID ( %s ) : %s", process, buf);
 	}
 	pclose(ls);
 	return buf;
@@ -141,6 +141,8 @@ int main(){
 		}
 
 		if(decine == 0 && unita == 0){
+			printf("timer completato\n");
+			printf("pid padre: %d   PID DA getExPid: %d\n", getpid(), getExPid("units"));
 			closeAll();
 		}
 	}

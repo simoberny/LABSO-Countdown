@@ -5,9 +5,42 @@
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
 
+#define READ 0
+#define WRITE 1
+
 int decine = -1;
 int fd_tens_in;
 int fd_tens_out;
+
+pid_t pidFiglio[7];
+int fds[7][2];
+
+const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
+
+void creazioneFigli(){
+
+int pid;
+	for(int i = 0; i<7; i++){
+		pipe(fds[i]);
+		pid = fork();
+		pidFiglio[i] = pid;
+
+		if (pid==0){
+			char messag[100];
+			while (1){
+				int bytesRead = read(fds[i][READ], messag, 100);
+				int valore=0;
+				sscanf(messag, "Numero: %d", &valore);
+				//printf("Figlio %d -> Read %d Numero: %d  on o off?? %d\n", i, bytesRead, valore,segmenti[valore][i]);
+				char str[100];
+				sprintf(str, "echo '%d'> tens_%d", segmenti[valore][i]==1,i);				
+				system(str);
+			}
+
+			exit(0);
+		}	
+	}
+}
 
 int readLine(int fd, char *str){
 	int n; 
@@ -45,9 +78,9 @@ int getExPid(char* process){
 }
 
 void closeAll(){
-	/*for(int i = 0; i < 7; i++){
+	for(int i = 0; i < 7; i++){
 		kill(pidFiglio[i], 9);
-	}*/
+	}
 	close(fd_tens_in);
 	close (fd_tens_out);
 	unlink("tens_pipe_out");
@@ -87,11 +120,11 @@ int main(){
 		}else if(strcmp(message, "stop") == 0){
 			closeAll();
 		}else if(strcmp(message, "print") == 0){
-			/*char a = 'a';
+			char a = 'a';
 			for(int i = 0; i < 7; i++){
 				a = 'a' + i;
-				printf("%c: %d\n",a,segmenti[unita][i]);
-			}*/
+				printf("%c: %d\n",a,segmenti[decine][i]);
+			}
 		}
 	}
 }
