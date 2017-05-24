@@ -22,7 +22,7 @@ int readLine(int fd, char *str){
 void countHandler (int sig) {
 	if(decine > 0){
 		decine--;
-		printf("\nDecremento decine: %d\n", decine);
+		//printf("\nDecremento decine: %d\n", decine);
 	}
 
 	if(decine == 0){
@@ -45,6 +45,9 @@ int getExPid(char* process){
 }
 
 void closeAll(){
+	/*for(int i = 0; i < 7; i++){
+		kill(pidFiglio[i], 9);
+	}*/
 	close(fd_tens_in);
 	close (fd_tens_out);
 	unlink("tens_pipe_out");
@@ -74,10 +77,21 @@ int main(){
 		sprintf(message, "%s", str);
 		if(strncmp(message, "tens", 4) == 0){
 			sscanf(message, "tens %d", &decine);
-			if(decine == 0) kill(getExPid("units"), 18);	// unità già nell' ultimo giro, decine gia finite (tutti i casi val <10)
+			if(decine == 0){
+				kill(getExPid("units"), 18);
+				closeAll();
+			}	// unità già nell' ultimo giro, decine gia finite (tutti i casi val <10)
 		}else if(strcmp(message, "elapsed") == 0){
 			sprintf(decine_str, "%d", decine);
 			write (fd_tens_out, decine_str, strlen(decine_str) + 1);
+		}else if(strcmp(message, "stop") == 0){
+			closeAll();
+		}else if(strcmp(message, "print") == 0){
+			/*char a = 'a';
+			for(int i = 0; i < 7; i++){
+				a = 'a' + i;
+				printf("%c: %d\n",a,segmenti[unita][i]);
+			}*/
 		}
 	}
 }

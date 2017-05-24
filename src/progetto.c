@@ -1,10 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 #include <sys/types.h>
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
 #include "progetto.h"
+
+#define C(x) ((_[*n-'0'])>>s)&m&x
+#define P putchar
 
 int fd_tens_in;
 int fd_tens_out;
@@ -12,6 +16,23 @@ int fd_tens_out;
 int fd_units_in;
 int fd_units_out;
 
+unsigned _[]={476,144,372,436,184,428,492,148,508,188};
+
+void p(int a,char*n,unsigned m,int s){
+	for(;isdigit(*n);++n){
+		P(C(1)?'|':' ');
+		for(int i=0;i<a;++i){
+			P(C(4)?'_':' ');
+		}
+		P(C(2)?'|':' ');
+	}
+		P('\n');
+}
+void l(int a,char*b){
+	p(a,b,7,0);int i=1;
+	for(;i<a;++i)p(a,b,3,3);p(a,b,7,3);i=1;
+	for(;i<a;++i)p(a,b,3,6);p(a,b,7,6);
+}
 
 void creazionePipe(){
 	//PIPE DI LETTURA DECINE
@@ -43,6 +64,19 @@ int readLine(int fd, char *str){
 	}while(n>0 && *str++ != '\0');
 
 	return n>0;
+}
+
+int getExPid(char* process){
+	char comand[29];
+	sprintf(comand, "pidof -s %s", process);
+
+	FILE *ls = popen(comand, "r");
+	char buf[256];
+	while (fgets(buf, sizeof(buf), ls) != 0) {
+   	 	//printf("\n PID ( %s ) : %s", process, buf);
+	}
+	pclose(ls);
+	return atoi(buf);
 }
 
 
@@ -78,29 +112,53 @@ void elapsed(){
 	char decine[10];
 	char unita[10];
 
-	//Apertura Pipe di scrittura
-	do {
-		fd_tens_out = open ("tens_pipe_out", O_WRONLY);
-	} while (fd_tens_out == -1);
+	//printf("PID: %d\n", getExPid("tens"));
 
-	do {
-		fd_units_out = open ("units_pipe_out", O_WRONLY);
-	} while (fd_units_out == -1);
-	
-	write (fd_tens_out, "elapsed", strlen("elapsed") + 1);
-	write (fd_units_out, "elapsed", strlen("elapsed") + 1);
+	if(getExPid("tens") != 0){
+		write (fd_tens_out, "elapsed", strlen("elapsed") + 1);
 
-	sleep(1);
+		while(!readLine(fd_tens_in, decine)){
+		}
 
-	while(readLine(fd_tens_in, decine)){
+	}else{
+		strcpy(decine, "0");
 	}
 
-	while(readLine(fd_units_in, unita)){
+	if(getExPid("units") != 0){
+		write (fd_units_out, "elapsed", strlen("elapsed") + 1);
+
+		while(!readLine(fd_units_in, unita)){
+		}
+	}else{
+		strcpy(unita, "0");
 	}
 
-	printf("\n Elapsed time: %s%s \n", decine, unita);
 
-	
+	char numero[10];
+	sprintf(numero, "%s%s", decine, unita);
+	l(3, numero);
+}
+
+void stop(){
+	if(getExPid("tens") != 0){
+		write (fd_tens_out, "stop", strlen("stop") + 1);
+	}
+
+	if(getExPid("units") != 0){
+		write (fd_units_out, "stop", strlen("stop") + 1);
+	}
+}
+
+void printTens(){
+	if(getExPid("tens") != 0){
+		write (fd_tens_out, "print", strlen("print") + 1);
+	}
+}
+
+void printUnits(){
+	if(getExPid("units") != 0){
+		write (fd_units_out, "print", strlen("print") + 1);
+	}
 }
 
 int main(int argc, char *argv[]){
@@ -127,15 +185,17 @@ int main(int argc, char *argv[]){
 			}else if(strcmp(comando, "elapsed") == 0){
 				elapsed();
 			}else if(strcmp(comando, "stop") == 0){
-				//TODO
+				stop();
 			}else if(strcmp(comando, "tens") == 0){
-				//TODO
-			}else if(strcmp(comando, "unit") == 0){
-				//TODO
+				printTens();
+			}else if(strcmp(comando, "units") == 0){
+				printUnits();
 			}else if(strcmp(comando, "quit") != 0){
 				printf("\ncomando errato\n");
 			}
 		}
+
+
 		
 	}while(!(strcmp(comando, "quit") == 0));
 

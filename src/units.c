@@ -24,9 +24,9 @@ int pid;
 	for(int i = 0; i<7; i++){
 		pipe(fds[i]);
 		pid = fork();
+		pidFiglio[i] = pid;
 
 		if (pid==0){
-			pidFiglio[i] = getpid();
 			char messag[100];
 			while (1){
 				int bytesRead = read(fds[i][READ], messag, 100);
@@ -70,10 +70,12 @@ int getExPid(char* process){
 }
 
 void closeAll(){
+	for(int i = 0; i < 7; i++){
+		kill(pidFiglio[i], 9);
+	}
 	close(fd_units_in);
 	close (fd_units_out);
 	unlink("units_pipe_out");
-	printf("-----------------\n Run \n-----------------\n");
 	exit(0);
 }
 
@@ -105,6 +107,14 @@ int main(){
 			}else if(strcmp(message, "elapsed") == 0){
 				sprintf(unita_str, "%d", unita);
 				write (fd_units_out, unita_str, strlen(unita_str) + 1);
+			}else if(strcmp(message, "stop") == 0){
+				closeAll();
+			}else if(strcmp(message, "print") == 0){
+				char a = 'a';
+				for(int i = 0; i < 7; i++){
+					a = 'a' + i;
+					printf("%c: %d\n",a,segmenti[unita][i]);
+				}
 			}
 		}
 
@@ -118,7 +128,7 @@ int main(){
 		if(unita > 0){ //Se ci sono unità le decremento 
 			sleep(1);
 			unita -= 1;
-			printf("Unità: %d\n", unita);
+			//printf("Unità: %d\n", unita);
 
 			//Scrivo nelle pipe anonime del figlio
 
