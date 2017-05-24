@@ -3,7 +3,7 @@ pkill countdown
 pkill tens
 pkill units
 make clean
-make build
+make assets
 cd build
 ./countdown
 

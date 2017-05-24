@@ -21,7 +21,7 @@ build: $(SDIR)/progetto.c $(SDIR)/progetto.h $(SDIR)/units.c $(SDIR)/tens.c
 
 #OPZIONALE - Chiama build e crea una cartella assets con i file di supporto
 assets:  
-	@mkdir assets && cd assets && \
+	@make build && mkdir assets && cd assets && \
 	for units in 1 2 3 4 5 6 7; do \
 		touch units_led_$$units ; \
 	done && \
