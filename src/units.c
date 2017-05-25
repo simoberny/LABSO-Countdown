@@ -4,6 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
+//#include <time.h>
 
 #define READ 0
 #define WRITE 1
@@ -18,7 +19,25 @@ int fds[7][2];
 
 const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
 
-void creazioneFigli(){
+int getExPid(char* process){
+	char comand[29];
+	sprintf(comand, "pidof -s %s", process);
+
+	FILE *ls = popen(comand, "r");
+	char buf[256];
+	while (fgets(buf, sizeof(buf), ls) != 0) {
+   	 	//printf("\n PID ( %s ) : %s", process, buf);
+	}
+	pclose(ls);
+	return buf;
+}
+
+void countHandler (int sig) { // Funzione che gestisce il segnale che manda le decine quando sono finite
+	decine = 0; // Permette alle unità di eseguire un ultimo ciclo;
+	sleep(1);
+}
+
+void creazioneFigli(char ** argv){
 
 int pid;
 	for(int i = 0; i<7; i++){
@@ -27,20 +46,41 @@ int pid;
 		pidFiglio[i] = pid;
 
 		if (pid==0){
+			unlink("tens_pipe_out");
+			close(fd_units_in);
+			close (fd_units_out);
+
+			int argv0size = strlen(argv[0]);
+			strncpy(argv[0], "figliounits", argv0size);
 			char messag[100];
+
+			char stato[50];
+			char colore[50];
+			strcpy(stato, "off");
+			strcpy(colore, "red");
+
 			while (1){
 				int bytesRead = read(fds[i][READ], messag, 100);
 				int valore=0;
-				sscanf(messag, "Numero: %d", &valore);
-				//printf("Figlio %d -> Read %d Numero: %d  on o off?? %d\n", i, bytesRead, valore,segmenti[valore][i]);
-				char str[100];
-				sprintf(str, "echo '%d'> units_%d", segmenti[valore][i]==1,i);				
-				system(str);
+				if(strncmp(messag, "Numero", 6) == 0){
+					sscanf(messag, "Numero: %d", &valore);
+					if(segmenti[valore][i] == 1){
+						strcpy(stato, colore);
+					}else{
+						strcpy(stato, "off");
+					}
+				}else if(strcmp(messag, "info") == 0){
+					printf("Stato LED %d: %s", i, stato);
+				}
+
 			}
 
 			exit(0);
 		}	
 	}
+
+	void countHandler (int);
+	signal (18, countHandler);
 }
 
 int readLine(int fd, char *str){
@@ -50,23 +90,6 @@ int readLine(int fd, char *str){
 	}while(n>0 && *str++ != '\0');
 
 	return n>0;
-}
-
-void countHandler (int sig) { // Funzione che gestisce il segnale che manda le decine quando sono finite
-	decine = 0; // Permette alle unità di eseguire un ultimo ciclo	
-}
-
-int getExPid(char* process){
-	char comand[29];
-	sprintf(comand, "pidof -s %s", process);
-
-	FILE *ls = popen(comand, "r");
-	char buf[256];
-	while (fgets(buf, sizeof(buf), ls) != 0) {
-   	 	printf("\n PID ( %s ) : %s", process, buf);
-	}
-	pclose(ls);
-	return buf;
 }
 
 void closeAll(){
@@ -79,14 +102,15 @@ void closeAll(){
 	exit(0);
 }
 
-int main(){
-	void countHandler (int);
-	signal (18, countHandler);
-	
+int main(int argc, char ** argv){
 	char unita_str[10];
 
 	char str[100];
 	char message[100];
+
+	clock_t start, end;
+	int prevdiff = 0;
+	int led;
 
 	do {
 		fd_units_out = open ("units_pipe_in", O_WRONLY);
@@ -103,7 +127,8 @@ int main(){
 	
 			if(strncmp(message, "units", 5) == 0){
 				sscanf(message, "units %d", &unita);
-				creazioneFigli();
+				start = clock();
+				creazioneFigli(argv);
 			}else if(strcmp(message, "elapsed") == 0){
 				sprintf(unita_str, "%d", unita);
 				write (fd_units_out, unita_str, strlen(unita_str) + 1);
@@ -115,19 +140,17 @@ int main(){
 					a = 'a' + i;
 					printf("%c: %d\n",a,segmenti[unita][i]);
 				}
-			}
-		}
-
-		if(decine > 0){			
-			if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
-				kill(getExPid("tens"), 17);
-				unita = 10; // E aggiorno le unità per ripartire
+			}else if(strncmp(message, "info", 4) == 0){
+				sscanf(message, "info %d", &led);
+				write(fds[led][WRITE], "info", 5);
 			}
 		}
 
 		if(unita > 0){ //Se ci sono unità le decremento 
+
 			sleep(1);
 			unita -= 1;
+			
 			//printf("Unità: %d\n", unita);
 
 			//Scrivo nelle pipe anonime del figlio
@@ -140,9 +163,16 @@ int main(){
 			}
 		}
 
+		if(decine > 0){			
+			if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
+				kill(getExPid("tens"), 17);
+				unita = 10; // E aggiorno le unità per ripartire
+			}
+		}
+
 		if(decine == 0 && unita == 0){
 			printf("timer completato\n");
-			printf("pid padre: %d   PID DA getExPid: %d\n", getpid(), getExPid("units"));
+			//printf("pid padre: %d   PID DA getExPid: %d\n", getpid(), getExPid("units"));
 			closeAll();
 		}
 	}

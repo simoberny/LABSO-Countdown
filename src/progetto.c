@@ -161,14 +161,50 @@ void printUnits(){
 	}
 }
 
+void getTens(int led){
+	if(getExPid("tens") != 0){
+		char message[100];
+		sprintf(message, "info %d", led);
+		write (fd_tens_out, "message", strlen("message") + 1);
+	}
+}
+
+void setTens(int led, char * color){
+	if(getExPid("tens") != 0){
+		char message[100];
+		sprintf(message, "color %d %s", led, color);
+		write (fd_tens_out, "message", strlen("message") + 1);
+	}
+}
+
+void getUnits(int led){
+	if(getExPid("units") != 0){
+		char message[100];
+		sprintf(message, "info %d", led);
+		write (fd_units_out, "message", strlen("message") + 1);
+	}
+}
+
+void setUnits(int led, char * color){
+	if(getExPid("units") != 0){
+		char message[100];
+		sprintf(message, "color %d %s", led, color);
+		write (fd_units_out, "message", strlen("message") + 1);
+	}
+}
+
 int main(int argc, char *argv[]){
+	system("killall -s SIGKILL units");
+	system("killall -s SIGKILL tens");
 	char comando[20];
 	int secondi = -1;
+	int led;
+	char ledcolor[100];
 
 	creazionePipe();
 
 	do{	
-		printf("\nComandi disponibili: \n-start <secondi>: Avvio countdown\n-elapsed: Secondi rimasti\n-stop: Ferma il conto alla rovescia\n-tens: Decine\n-units: Unità\n-quit\n");
+		printf("\nComandi disponibili: \n-start <secondi>: Avvio countdown\n-elapsed: Secondi rimasti\n-stop: Ferma il conto alla rovescia\n-tens: Decine\n-units: Unità\n-tensled info <n>\n-quit\n");
 		printf("-----------------\n Run \n-----------------\n");
 		if (fgets (comando , 20 , stdin) != NULL ){
 			int l= strlen(comando);//togliamo l' invio che prende dentro in automatico
@@ -190,6 +226,18 @@ int main(int argc, char *argv[]){
 				printTens();
 			}else if(strcmp(comando, "units") == 0){
 				printUnits();
+			}else if(strncmp(comando, "tensled info", 12) == 0){
+				sscanf(comando, "tensled info %d", &led);
+				getTens(led);
+			}else if(strncmp(comando, "unitsled info", 13) == 0){
+				sscanf(comando, "unitsled info %d", &led);
+				getUnits(led);
+			}else if(strncmp(comando, "tensled color", 13) == 0){
+				sscanf(comando, "tensled color %d %s", &led, ledcolor);
+				setTens(led, ledcolor);
+			}else if(strncmp(comando, "unitsled color", 14) == 0){
+				sscanf(comando, "unitsled color %d %s", &led, ledcolor);
+				setUnits(led, ledcolor);
 			}else if(strcmp(comando, "quit") != 0){
 				printf("\ncomando errato\n");
 			}

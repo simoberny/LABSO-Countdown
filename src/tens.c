@@ -17,39 +17,17 @@ int fds[7][2];
 
 const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
 
-void creazioneFigli(){
+int getExPid(char* process){
+	char comand[29];
+	sprintf(comand, "pidof -s %s", process);
 
-int pid;
-	for(int i = 0; i<7; i++){
-		pipe(fds[i]);
-		pid = fork();
-		pidFiglio[i] = pid;
-
-		if (pid==0){
-			char messag[100];
-			while (1){
-				int bytesRead = read(fds[i][READ], messag, 100);
-				int valore=0;
-				sscanf(messag, "Numero: %d", &valore);
-				//printf("Figlio %d -> Read %d Numero: %d  on o off?? %d\n", i, bytesRead, valore,segmenti[valore][i]);
-				char str[100];
-				sprintf(str, "echo '%d'> tens_%d", segmenti[valore][i]==1,i);				
-				system(str);
-			}
-
-			exit(0);
-		}	
+	FILE *ls = popen(comand, "r");
+	char buf[256];
+	while (fgets(buf, sizeof(buf), ls) != 0) {
+   	 	//printf("\n PID ( %s ) : %s", process, buf);
 	}
-}
-
-int readLine(int fd, char *str){
-	int n; 
-	
-	do{
-		n = read(fd, str, 1);
-	}while(n>0 && *str++ != '\0');
-
-	return n>0;
+	pclose(ls);
+	return buf;
 }
 
 void countHandler (int sig) {
@@ -64,17 +42,58 @@ void countHandler (int sig) {
 	}
 }
 
-int getExPid(char* process){
-	char comand[29];
-	sprintf(comand, "pidof -s %s", process);
+void creazioneFigli(char ** argv){
 
-	FILE *ls = popen(comand, "r");
-	char buf[256];
-	while (fgets(buf, sizeof(buf), ls) != 0) {
-   	 	//printf("\n PID ( %s ) : %s", process, buf);
+	int pid;
+	for(int i = 0; i<7; i++){
+		pipe(fds[i]);
+		pid = fork();
+		pidFiglio[i] = pid;
+
+		if (pid==0){
+			unlink("tens_pipe_out");
+			close(fd_tens_in);
+			close (fd_tens_out);
+			int argv0size = strlen(argv[0]);
+			strncpy(argv[0], "figliotens", argv0size);
+			char messag[100];
+
+			char stato[50];
+			char colore[50];
+			strcpy(stato, "off");
+			strcpy(colore, "red");
+
+			while (1){
+				int bytesRead = read(fds[i][READ], messag, 100);
+				int valore=0;
+				if(strncmp(messag, "Numero", 6) == 0){
+					sscanf(messag, "Numero: %d", &valore);
+					if(segmenti[valore][i] == 1){
+						strcpy(stato, colore);
+					}else{
+						strcpy(stato, "off");
+					}
+				}else if(strcmp(messag, "info") == 0){
+					printf("Stato LED %d: %s", i, stato);
+				}
+			}
+
+			exit(0);
+		}	
 	}
-	pclose(ls);
-	return buf;
+
+	void countHandler (int);
+	signal (17, countHandler);
+}
+
+int readLine(int fd, char *str){
+	int n; 
+	
+	do{
+		n = read(fd, str, 1);
+	}while(n>0 && *str++ != '\0');
+
+	return n>0;
 }
 
 void closeAll(){
@@ -88,14 +107,13 @@ void closeAll(){
 }
 
 
-int main(){
-	void countHandler (int);
-	signal (17, countHandler);
-
+int main(int argc, char ** argv){
 	char decine_str[10];
 
 	char str[100];
 	char message[100];
+
+	int led;
 
 	do {
 		fd_tens_out = open ("tens_pipe_in", O_WRONLY);
@@ -110,6 +128,7 @@ int main(){
 		sprintf(message, "%s", str);
 		if(strncmp(message, "tens", 4) == 0){
 			sscanf(message, "tens %d", &decine);
+			creazioneFigli(argv);
 			if(decine == 0){
 				kill(getExPid("units"), 18);
 				closeAll();
@@ -125,6 +144,9 @@ int main(){
 				a = 'a' + i;
 				printf("%c: %d\n",a,segmenti[decine][i]);
 			}
+		}else if(strncmp(message, "info", 4) == 0){
+			sscanf(message, "info %d", &led);
+			write(fds[led][WRITE], "info", 5);
 		}
 	}
 }
