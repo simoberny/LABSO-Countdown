@@ -14,7 +14,7 @@ build: $(SDIR)/progetto.c $(SDIR)/progetto.h $(SDIR)/units.c $(SDIR)/tens.c
 	@mkdir build && \
 	gcc $(SDIR)/progetto.c $(SDIR)/progetto.h -o countdown && \
 	gcc $(SDIR)/tens.c -o tens && \
-	gcc $(SDIR)/units.c -o units
+	gcc $(SDIR)/units.c -o units && \
 	mv countdown  build/ && \
 	mv tens build/ && \
 	mv units build/
@@ -32,4 +32,4 @@ assets:
 	
 #OPZIONALE - Esegue il progetto in modalità TEST richiamando prima "assets"
 test: 
-	make assets && echo "TESTING"
+	@make assets && echo "TESTING" && cd build && ./countdown 35
