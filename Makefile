@@ -12,21 +12,21 @@ clean:
 #Deve creare la cartella build con dentro il file eseguibile
 build: $(SDIR)/progetto.c $(SDIR)/progetto.h $(SDIR)/units.c $(SDIR)/tens.c
 	@mkdir build && \
-	gcc $(SDIR)/progetto.c $(SDIR)/progetto.h -o countdown && \
-	gcc $(SDIR)/tens.c -o tens && \
-	gcc $(SDIR)/units.c -o units && \
+	gcc -w $(SDIR)/progetto.c $(SDIR)/progetto.h -o countdown && \
+	gcc -w $(SDIR)/tens.c -o tens && \
+	gcc -w $(SDIR)/units.c -o units && \
 	mv countdown  build/ && \
 	mv tens build/ && \
 	mv units build/
 
 #OPZIONALE - Chiama build e crea una cartella assets con i file di supporto
 assets:  
-	@make build && mkdir assets && cd assets && \
+	@mkdir assets && make build && \
 	for units in 1 2 3 4 5 6 7; do \
-		touch units_led_$$units ; \
+		touch assets/units_led_$$units ; \
 	done && \
 	for tens in 1 2 3 4 5 6 7; do \
-		touch tens_led_$$tens ; \
+		touch assets/tens_led_$$tens ; \
 	done
 		
 	
