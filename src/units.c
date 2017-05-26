@@ -26,7 +26,6 @@ int getExPid(char* process){
 	FILE *ls = popen(comand, "r");
 	char buf[256];
 	while (fgets(buf, sizeof(buf), ls) != 0) {
-   	 	//printf("\n PID ( %s ) : %s", process, buf);
 	}
 	pclose(ls);
 	return buf;
@@ -54,14 +53,15 @@ void creazioneFigli(char ** argv){
 
 			int argv0size = strlen(argv[0]);
 			strncpy(argv[0], "figliounits", argv0size);
+
 			char messag[100];
 			char comando[100];
 			char tmpColor[50];
 
 			char stato[50];
 			char colore[50];
-			strcpy(stato, "off");
-			strcpy(colore, "red");
+			strcpy(stato, "off"); //Stato di ogni segmento inizializzato come spento
+			strcpy(colore, "red"); //Colore di ogni segmento inizializzato a RED
 
 			while (1){
 
@@ -79,6 +79,7 @@ void creazioneFigli(char ** argv){
 							strcpy(stato, "off");
 						}
 
+						// Salvo lo stato del segmento su file
 						char directory[100];
 						sprintf(directory, "../assets/units_led_%d", i);
 
@@ -89,11 +90,12 @@ void creazioneFigli(char ** argv){
   							fclose(fd);
 						}
 
+						// Funzioni per leggere e settare stato segmento
 						if(strcmp(comando, "Info") == 0){
 							printf("Stato LED Unità %d: %s \n",i, stato);
 						}else if(strcmp(comando, "Color") == 0){
 							strcpy(colore, tmpColor);
-							printf("Colore settato: %s\n", colore);
+							printf("Colore segmento %d settato a: %s\n", i, colore);
 						}
 					}
 				}
@@ -198,7 +200,6 @@ int main(int argc, char ** argv){
 
 			sleep(1);
 			unita -= 1;
-
 		}
 
 		if(decine == 0 && unita == 0){

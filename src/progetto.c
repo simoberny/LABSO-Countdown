@@ -16,6 +16,8 @@ int fd_tens_out;
 int fd_units_in;
 int fd_units_out;
 
+/*   Codice per generazione 7 segmenti a schermo    */
+
 unsigned _[]={476,144,372,436,184,428,492,148,508,188};
 
 void p(int a,char*n,unsigned m,int s){
@@ -33,6 +35,8 @@ void l(int a,char*b){
 	for(;i<a;++i)p(a,b,3,3);p(a,b,7,3);i=1;
 	for(;i<a;++i)p(a,b,3,6);p(a,b,7,6);
 }
+
+/*****************************************************/
 
 void creazionePipe(){
 	//PIPE DI LETTURA DECINE
@@ -73,7 +77,6 @@ int getExPid(char* process){
 	FILE *ls = popen(comand, "r");
 	char buf[256];
 	while (fgets(buf, sizeof(buf), ls) != 0) {
-   	 	//printf("\n PID ( %s ) : %s", process, buf);
 	}
 	pclose(ls);
 	return atoi(buf);
@@ -111,8 +114,6 @@ void start(int sec){
 void elapsed(){
 	char decine[10];
 	char unita[10];
-
-	//printf("PID: %d\n", getExPid("tens"));
 
 	if(getExPid("tens") != 0){
 		write (fd_tens_out, "elapsed", strlen("elapsed") + 1);
@@ -162,40 +163,57 @@ void printUnits(){
 }
 
 void getTens(int led){
-	if(getExPid("tens") != 0){
-		char message[100];
-		sprintf(message, "info %d", led);
-		write (fd_tens_out, message, strlen(message) + 1);
+	if(led >= 0 && led < 7){
+		if(getExPid("tens") != 0){
+			char message[100];
+			sprintf(message, "info %d", led);
+			write (fd_tens_out, message, strlen(message) + 1);
+		}
+	}else{
+		printf("Il numero non rappresenta un segmento!\n");
 	}
 }
 
 void setTens(int led, char * color){
-	if(getExPid("tens") != 0){
-		char message[100];
-		sprintf(message, "color %d %s", led, color);
-		write (fd_tens_out, message, strlen(message) + 1);
+	if(led >= 0 && led < 7){
+		if(getExPid("tens") != 0){
+			char message[100];
+			sprintf(message, "color %d %s", led, color);
+			write (fd_tens_out, message, strlen(message) + 1);
+		}
+	}else{
+		printf("Il numero non rappresenta un segmento!\n");
 	}
 }
 
 void getUnits(int led){
-	if(getExPid("units") != 0){
-		char message[100];
-		sprintf(message, "info %d", led);
-		write (fd_units_out, message, strlen(message) + 1);
+	if(led >= 0 && led < 7){
+		if(getExPid("units") != 0){
+			char message[100];
+			sprintf(message, "info %d", led);
+			write (fd_units_out, message, strlen(message) + 1);
+		}
+	}else{
+		printf("Il numero non rappresenta un segmento!\n");
 	}
 }
 
 void setUnits(int led, char * color){
-	if(getExPid("units") != 0){
-		char message[100];
-		sprintf(message, "color %d %s", led, color);
-		write (fd_units_out, message, strlen(message) + 1);
+	if(led >= 0 && led < 7){
+		if(getExPid("units") != 0){
+			char message[100];
+			sprintf(message, "color %d %s", led, color);
+			write (fd_units_out, message, strlen(message) + 1);
+		}
+	}else{
+		printf("Il numero non rappresenta un segmento!\n");
 	}
 }
 
 int main(int argc, char *argv[]){
-	system("killall -s SIGKILL units");
-	system("killall -s SIGKILL tens");
+	/*system("killall -s SIGKILL units 2>&1");
+	system("killall -s SIGKILL tens 2>&1");*/
+
 	char comando[100];
 	int secondi = -1;
 	int led;
@@ -221,7 +239,7 @@ int main(int argc, char *argv[]){
 
 	do{	
 		sleep(1);
-		printf("\nComandi disponibili: \n-start <secondi>: Avvio countdown\n-elapsed: Secondi rimasti\n-stop: Ferma il conto alla rovescia\n-tens: Decine\n-units: Unità\n-tensled info <n>\n-quit\n");
+		printf("\nComandi disponibili: \n-start <secondi>: Avvio countdown\n-elapsed: Secondi rimasti\n-stop: Ferma il conto alla rovescia\n-tens: Decine\n-units: Unità\n-tensled info <n>\n-unitsled info <n>\n-tensled color <n> <color>\n-unitsled color <n> <color>\n-quit\n");
 		printf("-----------------\n Run \n-----------------\n");
 		if (fgets (comando , 100 , stdin) != NULL ){
 			int l= strlen(comando);//togliamo l' invio che prende dentro in automatico
@@ -243,17 +261,17 @@ int main(int argc, char *argv[]){
 				printTens();
 			}else if(strcmp(comando, "units") == 0){
 				printUnits();
-			}else if(strncmp(comando, "ti", 2) == 0){ //TODO
-				sscanf(comando, "ti %d", &led);
+			}else if(strncmp(comando, "tensled info", 12) == 0){ //TODO
+				sscanf(comando, "tensled info %d", &led);
 				getTens(led);
-			}else if(strncmp(comando, "ui", 2) == 0){ //TODO
-				sscanf(comando, "ui %d", &led);
+			}else if(strncmp(comando, "unitsled info", 13) == 0){ //TODO
+				sscanf(comando, "unitsled info %d", &led);
 				getUnits(led);
-			}else if(strncmp(comando, "tc", 2) == 0){ //TODO
-				sscanf(comando, "tc %d %s", &led, ledcolor);
+			}else if(strncmp(comando, "tensled color", 13) == 0){ //TODO
+				sscanf(comando, "tensled color %d %s", &led, ledcolor);
 				setTens(led, ledcolor);
-			}else if(strncmp(comando, "uc", 2) == 0){ //TODO
-				sscanf(comando, "uc %d %s", &led, ledcolor);
+			}else if(strncmp(comando, "unitsled color", 14) == 0){ //TODO
+				sscanf(comando, "unitsled color %d %s", &led, ledcolor);
 				setUnits(led, ledcolor);
 			}else if(strcmp(comando, "quit") != 0){
 				printf("\ncomando errato\n");
