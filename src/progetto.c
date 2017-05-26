@@ -201,9 +201,26 @@ int main(int argc, char *argv[]){
 	int led;
 	char ledcolor[50];
 
+	FILE *fd;
+	char directory[100];
+
 	creazionePipe();
 
+	int secimp = 0;
+
+	if(argc > 1){
+		secimp = atoi(argv[1]);
+		if(secimp > -1 && secimp < 60){
+			fd=fopen("../assets/testmode.txt", "ab+");
+			fprintf(fd, "%d", secimp);
+			fclose(fd);
+
+			start(secimp);
+		}
+	}
+
 	do{	
+		sleep(1);
 		printf("\nComandi disponibili: \n-start <secondi>: Avvio countdown\n-elapsed: Secondi rimasti\n-stop: Ferma il conto alla rovescia\n-tens: Decine\n-units: Unità\n-tensled info <n>\n-quit\n");
 		printf("-----------------\n Run \n-----------------\n");
 		if (fgets (comando , 100 , stdin) != NULL ){
@@ -218,7 +235,7 @@ int main(int argc, char *argv[]){
 				}else{
 					printf("\nInserire un tempo valido\n");				
 				}
-			}else if(strcmp(comando, "e") == 0){
+			}else if(strcmp(comando, "elapsed") == 0){
 				elapsed();
 			}else if(strcmp(comando, "stop") == 0){
 				stop();
@@ -242,8 +259,6 @@ int main(int argc, char *argv[]){
 				printf("\ncomando errato\n");
 			}
 		}
-
-		sleep(1);
 		
 	}while(!(strcmp(comando, "quit") == 0));
 

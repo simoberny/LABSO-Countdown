@@ -156,7 +156,6 @@ int main(int argc, char ** argv){
 	
 			if(strncmp(message, "units", 5) == 0){
 				sscanf(message, "units %d", &unita);
-				start = clock();
 				creazioneFigli(argv);
 			}else if(strcmp(message, "elapsed") == 0){
 				sprintf(unita_str, "%d", unita);
