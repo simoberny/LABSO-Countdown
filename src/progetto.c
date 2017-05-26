@@ -165,7 +165,7 @@ void getTens(int led){
 	if(getExPid("tens") != 0){
 		char message[100];
 		sprintf(message, "info %d", led);
-		write (fd_tens_out, "message", strlen("message") + 1);
+		write (fd_tens_out, message, strlen(message) + 1);
 	}
 }
 
@@ -173,7 +173,7 @@ void setTens(int led, char * color){
 	if(getExPid("tens") != 0){
 		char message[100];
 		sprintf(message, "color %d %s", led, color);
-		write (fd_tens_out, "message", strlen("message") + 1);
+		write (fd_tens_out, message, strlen(message) + 1);
 	}
 }
 
@@ -181,7 +181,7 @@ void getUnits(int led){
 	if(getExPid("units") != 0){
 		char message[100];
 		sprintf(message, "info %d", led);
-		write (fd_units_out, "message", strlen("message") + 1);
+		write (fd_units_out, message, strlen(message) + 1);
 	}
 }
 
@@ -189,7 +189,7 @@ void setUnits(int led, char * color){
 	if(getExPid("units") != 0){
 		char message[100];
 		sprintf(message, "color %d %s", led, color);
-		write (fd_units_out, "message", strlen("message") + 1);
+		write (fd_units_out, message, strlen(message) + 1);
 	}
 }
 
@@ -199,7 +199,7 @@ int main(int argc, char *argv[]){
 	char comando[20];
 	int secondi = -1;
 	int led;
-	char ledcolor[100];
+	char ledcolor[50];
 
 	creazionePipe();
 

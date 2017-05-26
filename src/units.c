@@ -61,7 +61,10 @@ int pid;
 
 			while (1){
 				int bytesRead = read(fds[i][READ], messag, 100);
+
 				int valore=0;
+				int led = 0;
+
 				if(strncmp(messag, "Numero", 6) == 0){
 					sscanf(messag, "Numero: %d", &valore);
 					if(segmenti[valore][i] == 1){
@@ -69,8 +72,13 @@ int pid;
 					}else{
 						strcpy(stato, "off");
 					}
-				}else if(strcmp(messag, "info") == 0){
-					printf("Stato LED %d: %s", i, stato);
+					//printf("Numero: %d - Stato: %s\n", valore, stato);
+				}else if(strncmp(messag, "Info", 4) == 0){
+					sscanf(messag, "Info %d", &led);
+					printf("Stato LED %d: %s \n", led, stato);
+				}else if(strncmp(messag, "Color", 5) == 0){
+					sscanf(messag, "Color %s", &colore);
+					printf("Colore settato: %s\n", colore);
 				}
 
 			}
@@ -107,10 +115,11 @@ int main(int argc, char ** argv){
 
 	char str[100];
 	char message[100];
+	char readcolor[50];
 
 	clock_t start, end;
 	int prevdiff = 0;
-	int led;
+	int led = 0;
 
 	do {
 		fd_units_out = open ("units_pipe_in", O_WRONLY);
@@ -142,7 +151,15 @@ int main(int argc, char ** argv){
 				}
 			}else if(strncmp(message, "info", 4) == 0){
 				sscanf(message, "info %d", &led);
-				write(fds[led][WRITE], "info", 5);
+				char prova[100];
+				sprintf(prova, "Info %d", led);
+				write(fds[led][WRITE], prova, strlen(prova)+1);
+
+			}else if(strncmp(message, "color", 5) == 0){
+				sscanf(message, "color %d %s", &led, readcolor);
+				char prova[100];
+				sprintf(prova, "Color %s", readcolor);
+				write(fds[led][WRITE], prova, strlen(prova)+1);
 			}
 		}
 
