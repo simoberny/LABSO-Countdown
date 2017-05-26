@@ -54,9 +54,14 @@ void creazioneFigli(char ** argv){
 			unlink("tens_pipe_out");
 			close(fd_tens_in);
 			close (fd_tens_out);
+
+			FILE *fd;
+
 			int argv0size = strlen(argv[0]);
 			strncpy(argv[0], "figliotens", argv0size);
 			char messag[100];
+			char comando[100];
+			char tmpColor[50];
 
 			char stato[50];
 			char colore[50];
@@ -64,25 +69,36 @@ void creazioneFigli(char ** argv){
 			strcpy(colore, "red");
 
 			while (1){
-				int bytesRead = read(fds[i][READ], messag, 100);
-				int valore=0;
-				int led = 0;
+				int bytesRead;
+				while((bytesRead = read(fds[i][READ], messag, 100)) > 0){
+					int valore=0;
+					int led = 0;
 
-				if(strncmp(messag, "Numero", 6) == 0){
+					if(strncmp(messag, "n", 1) == 0){
+						sscanf(messag, "n %d %s %s", &valore, comando, tmpColor);
+						if(segmenti[valore][i] == 1){
+							strcpy(stato, colore);
+						}else{
+							strcpy(stato, "off");
+						}
 
-					sscanf(messag, "Numero: %d", &valore);
-					if(segmenti[valore][i] == 1){
-						strcpy(stato, colore);
-					}else{
-						strcpy(stato, "off");
+						char directory[100];
+						sprintf(directory, "../assets/tens_led_%d", i);
+
+						fd=fopen(directory, "w");
+
+						if(fd != NULL){
+							fprintf(fd, "%s\n", stato);
+  							fclose(fd);
+						}
+
+						if(strcmp(comando, "Info") == 0){
+							printf("Stato LED Decine%d: %s \n",i, stato);
+						}else if(strcmp(comando, "Color") == 0){
+							strcpy(colore, tmpColor);
+							printf("Colore settato: %s\n", colore);
+						}
 					}
-
-				}else if(strncmp(messag, "Info", 4) == 0){
-					sscanf(messag, "Info %d", &led);
-					printf("Stato LED %d: %s - Colore: %s\n", led, stato, colore);
-				}else if(strncmp(messag, "Color", 5) == 0){
-					sscanf(messag, "Color %s", &colore);
-					printf("Colore settato: %s\n", colore);
 				}
 			}
 
@@ -121,8 +137,11 @@ int main(int argc, char ** argv){
 	char str[100];
 	char message[100];
 	char readcolor[50];
+	char msgPip[100];
 
-	int led = 0;
+	char richiesta[100];
+
+	int led = -1;
 
 	do {
 		fd_tens_out = open ("tens_pipe_in", O_WRONLY);
@@ -155,14 +174,20 @@ int main(int argc, char ** argv){
 			}
 		}else if(strncmp(message, "info", 4) == 0){
 			sscanf(message, "info %d", &led);
-			char prova[100];
-			sprintf(prova, "Info %d", led);
-			write(fds[led][WRITE], prova, strlen(prova)+1);
+			sprintf(richiesta, "Info");
 		}else if(strncmp(message, "color", 5) == 0){
 			sscanf(message, "color %d %s", &led, readcolor);
-			char prova[100];
-			sprintf(prova, "Color %s", readcolor);
-			write(fds[led][WRITE], prova, strlen(prova)+1);
+			sprintf(richiesta, "Color %s", readcolor);
+		}
+
+		for(int i = 0; i < 7; i++){
+			if(led == i){
+				sprintf(msgPip, "n %d %s", decine, richiesta);
+				led = -1;
+			}else{
+				sprintf(msgPip, "n %d non non", decine);
+			}
+			write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
 		}
 	}
 }

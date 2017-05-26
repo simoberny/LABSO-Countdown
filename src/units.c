@@ -39,7 +39,7 @@ void countHandler (int sig) { // Funzione che gestisce il segnale che manda le d
 
 void creazioneFigli(char ** argv){
 
-int pid;
+	int pid;
 	for(int i = 0; i<7; i++){
 		pipe(fds[i]);
 		pid = fork();
@@ -50,10 +50,13 @@ int pid;
 			close(fd_units_in);
 			close (fd_units_out);
 
+			FILE *fd;
+
 			int argv0size = strlen(argv[0]);
 			strncpy(argv[0], "figliounits", argv0size);
 			char messag[100];
 			char comando[100];
+			char tmpColor[50];
 
 			char stato[50];
 			char colore[50];
@@ -69,19 +72,29 @@ int pid;
 					int led = 0;
 
 					if(strncmp(messag, "n", 1) == 0){
-						sscanf(messag, "n %d", &valore, comando);
+						sscanf(messag, "n %d %s %s", &valore, comando, tmpColor);
 						if(segmenti[valore][i] == 1){
 							strcpy(stato, colore);
 						}else{
 							strcpy(stato, "off");
 						}
 
-					}else if(strncmp(messag, "Info", 4) == 0){
-						sscanf(messag, "Info %d", &led);
-						printf("Stato LED %d: %s \n", led, stato);
-					}else if(strncmp(messag, "Color", 5) == 0){
-						sscanf(messag, "Color %s", &colore);
-						printf("Colore settato: %s\n", colore);
+						char directory[100];
+						sprintf(directory, "../assets/units_led_%d", i);
+
+						fd=fopen(directory, "w");
+
+						if(fd != NULL){
+							fprintf(fd, "%s\n", stato);
+  							fclose(fd);
+						}
+
+						if(strcmp(comando, "Info") == 0){
+							printf("Stato LED Unità %d: %s \n",i, stato);
+						}else if(strcmp(comando, "Color") == 0){
+							strcpy(colore, tmpColor);
+							printf("Colore settato: %s\n", colore);
+						}
 					}
 				}
 
@@ -138,9 +151,6 @@ int main(int argc, char ** argv){
 	fd_units_in = open ("units_pipe_out", O_NONBLOCK);
 
 	while(1){	
-
-
-
 		if (readLine (fd_units_in, str)) {
 			sprintf(message, "%s", str);
 	
@@ -161,7 +171,7 @@ int main(int argc, char ** argv){
 				}
 			}else if(strncmp(message, "info", 4) == 0){
 				sscanf(message, "info %d", &led);
-				sprintf(richiesta, "Info %d", led);
+				sprintf(richiesta, "Info");
 
 			}else if(strncmp(message, "color", 5) == 0){
 				sscanf(message, "color %d %s", &led, readcolor);
@@ -177,14 +187,13 @@ int main(int argc, char ** argv){
 		}
 
 		if(unita > 0){ //Se ci sono unità le decremento 
-
-			if(led != -1){
-				write(fds[led][WRITE], richiesta, strlen(richiesta) + 1);
-				led = -1;
-			}
-
 			for(int i = 0; i < 7; i++){
-				sprintf(msgPip, "n %d", unita);
+				if(led == i){
+					sprintf(msgPip, "n %d %s", unita, richiesta);
+					led = -1;
+				}else{
+					sprintf(msgPip, "n %d non non", unita);
+				}
 				write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
 			}
 
