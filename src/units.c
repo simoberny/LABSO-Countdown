@@ -4,7 +4,7 @@
 #include <sys/types.h>
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
-//#include <time.h>
+#include <unistd.h>
 
 #define READ 0
 #define WRITE 1
@@ -53,6 +53,7 @@ int pid;
 			int argv0size = strlen(argv[0]);
 			strncpy(argv[0], "figliounits", argv0size);
 			char messag[100];
+			char comando[100];
 
 			char stato[50];
 			char colore[50];
@@ -60,27 +61,28 @@ int pid;
 			strcpy(colore, "red");
 
 			while (1){
-				int bytesRead = read(fds[i][READ], messag, 100);
 
-				//printf("Ricevuto: %s\n", messag);
+				int bytesRead;
 
-				int valore=0;
-				int led = 0;
+				while((bytesRead = read(fds[i][READ], messag, 100)) > 0){
+					int valore=0;
+					int led = 0;
 
-				if(strncmp(messag, "Numero", 6) == 0){
-					sscanf(messag, "Numero: %d", &valore);
-					if(segmenti[valore][i] == 1){
-						strcpy(stato, colore);
-					}else{
-						strcpy(stato, "off");
+					if(strncmp(messag, "n", 1) == 0){
+						sscanf(messag, "n %d", &valore, comando);
+						if(segmenti[valore][i] == 1){
+							strcpy(stato, colore);
+						}else{
+							strcpy(stato, "off");
+						}
+
+					}else if(strncmp(messag, "Info", 4) == 0){
+						sscanf(messag, "Info %d", &led);
+						printf("Stato LED %d: %s \n", led, stato);
+					}else if(strncmp(messag, "Color", 5) == 0){
+						sscanf(messag, "Color %s", &colore);
+						printf("Colore settato: %s\n", colore);
 					}
-					//printf("Numero: %d - Stato: %s\n", valore, stato);
-				}else if(strncmp(messag, "Info", 4) == 0){
-					sscanf(messag, "Info %d", &led);
-					printf("Stato LED %d: %s \n", led, stato);
-				}else if(strncmp(messag, "Color", 5) == 0){
-					sscanf(messag, "Color %s", &colore);
-					printf("Colore settato: %s\n", colore);
 				}
 
 			}
@@ -119,9 +121,12 @@ int main(int argc, char ** argv){
 	char message[100];
 	char readcolor[50];
 
+	char richiesta[100];
+	char msgPip[100];
+
 	clock_t start, end;
 	int prevdiff = 0;
-	int led = 0;
+	int led = -1;
 
 	do {
 		fd_units_out = open ("units_pipe_in", O_WRONLY);
@@ -133,6 +138,9 @@ int main(int argc, char ** argv){
 	fd_units_in = open ("units_pipe_out", O_NONBLOCK);
 
 	while(1){	
+
+
+
 		if (readLine (fd_units_in, str)) {
 			sprintf(message, "%s", str);
 	
@@ -153,15 +161,11 @@ int main(int argc, char ** argv){
 				}
 			}else if(strncmp(message, "info", 4) == 0){
 				sscanf(message, "info %d", &led);
-				char prova[100];
-				sprintf(prova, "Info %d", led);
-				write(fds[led][WRITE], prova, strlen(prova)+1);
+				sprintf(richiesta, "Info %d", led);
 
 			}else if(strncmp(message, "color", 5) == 0){
 				sscanf(message, "color %d %s", &led, readcolor);
-				char prova[100];
-				sprintf(prova, "Color %s", readcolor);
-				write(fds[led][WRITE], prova, strlen(prova)+1);
+				sprintf(richiesta, "Color %s", readcolor);
 			}
 		}
 
@@ -173,17 +177,20 @@ int main(int argc, char ** argv){
 		}
 
 		if(unita > 0){ //Se ci sono unità le decremento 
-			
+
+			if(led != -1){
+				write(fds[led][WRITE], richiesta, strlen(richiesta) + 1);
+				led = -1;
+			}
+
+			for(int i = 0; i < 7; i++){
+				sprintf(msgPip, "n %d", unita);
+				write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
+			}
+
 			sleep(1);
 			unita -= 1;
 
-			//Scrivo nelle pipe anonime del figlio
-			char msgPip[30];
-			sprintf(msgPip, "Numero: %d", unita);
-
-			for(int i = 0; i < 7; i++){
-				write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
-			}
 		}
 
 		if(decine == 0 && unita == 0){
