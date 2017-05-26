@@ -62,6 +62,8 @@ int pid;
 			while (1){
 				int bytesRead = read(fds[i][READ], messag, 100);
 
+				//printf("Ricevuto: %s\n", messag);
+
 				int valore=0;
 				int led = 0;
 
@@ -163,27 +165,24 @@ int main(int argc, char ** argv){
 			}
 		}
 
-		if(unita > 0){ //Se ci sono unità le decremento 
-
-			sleep(1);
-			unita -= 1;
-			
-			//printf("Unità: %d\n", unita);
-
-			//Scrivo nelle pipe anonime del figlio
-
-			char msgPip[100];
-			sprintf(msgPip, "Numero: %d", unita);
-
-			for(int i = 0; i < 7; i++){
-				write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
-			}
-		}
-
 		if(decine > 0){			
 			if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
 				kill(getExPid("tens"), 17);
 				unita = 10; // E aggiorno le unità per ripartire
+			}
+		}
+
+		if(unita > 0){ //Se ci sono unità le decremento 
+			
+			sleep(1);
+			unita -= 1;
+
+			//Scrivo nelle pipe anonime del figlio
+			char msgPip[30];
+			sprintf(msgPip, "Numero: %d", unita);
+
+			for(int i = 0; i < 7; i++){
+				write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
 			}
 		}
 

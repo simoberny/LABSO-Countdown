@@ -79,7 +79,7 @@ void creazioneFigli(char ** argv){
 
 				}else if(strncmp(messag, "Info", 4) == 0){
 					sscanf(messag, "Info %d", &led);
-					printf("Stato LED %d: %s\n", led, stato);
+					printf("Stato LED %d: %s - Colore: %s\n", led, stato, colore);
 				}else if(strncmp(messag, "Color", 5) == 0){
 					sscanf(messag, "Color %s", &colore);
 					printf("Colore settato: %s\n", colore);
@@ -160,12 +160,10 @@ int main(int argc, char ** argv){
 			write(fds[led][WRITE], prova, strlen(prova)+1);
 		}else if(strncmp(message, "color", 5) == 0){
 			sscanf(message, "color %d %s", &led, readcolor);
-			printf("Colore ricevuto: %s\n", readcolor);
 			char prova[100];
 			sprintf(prova, "Color %s", readcolor);
 			write(fds[led][WRITE], prova, strlen(prova)+1);
 		}
-
 	}
 }
 

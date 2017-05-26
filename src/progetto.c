@@ -196,7 +196,7 @@ void setUnits(int led, char * color){
 int main(int argc, char *argv[]){
 	system("killall -s SIGKILL units");
 	system("killall -s SIGKILL tens");
-	char comando[20];
+	char comando[100];
 	int secondi = -1;
 	int led;
 	char ledcolor[50];
@@ -206,7 +206,7 @@ int main(int argc, char *argv[]){
 	do{	
 		printf("\nComandi disponibili: \n-start <secondi>: Avvio countdown\n-elapsed: Secondi rimasti\n-stop: Ferma il conto alla rovescia\n-tens: Decine\n-units: Unità\n-tensled info <n>\n-quit\n");
 		printf("-----------------\n Run \n-----------------\n");
-		if (fgets (comando , 20 , stdin) != NULL ){
+		if (fgets (comando , 100 , stdin) != NULL ){
 			int l= strlen(comando);//togliamo l' invio che prende dentro in automatico
 			comando[l-1] = '\0';
 			
@@ -218,7 +218,7 @@ int main(int argc, char *argv[]){
 				}else{
 					printf("\nInserire un tempo valido\n");				
 				}
-			}else if(strcmp(comando, "elapsed") == 0){
+			}else if(strcmp(comando, "e") == 0){
 				elapsed();
 			}else if(strcmp(comando, "stop") == 0){
 				stop();
@@ -226,17 +226,17 @@ int main(int argc, char *argv[]){
 				printTens();
 			}else if(strcmp(comando, "units") == 0){
 				printUnits();
-			}else if(strncmp(comando, "tensled info", 12) == 0){
-				sscanf(comando, "tensled info %d", &led);
+			}else if(strncmp(comando, "ti", 2) == 0){ //TODO
+				sscanf(comando, "ti %d", &led);
 				getTens(led);
-			}else if(strncmp(comando, "unitsled info", 13) == 0){
-				sscanf(comando, "unitsled info %d", &led);
+			}else if(strncmp(comando, "ui", 2) == 0){ //TODO
+				sscanf(comando, "ui %d", &led);
 				getUnits(led);
-			}else if(strncmp(comando, "tensled color", 13) == 0){
-				sscanf(comando, "tensled color %d %s", &led, ledcolor);
+			}else if(strncmp(comando, "tc", 2) == 0){ //TODO
+				sscanf(comando, "tc %d %s", &led, ledcolor);
 				setTens(led, ledcolor);
-			}else if(strncmp(comando, "unitsled color", 14) == 0){
-				sscanf(comando, "unitsled color %d %s", &led, ledcolor);
+			}else if(strncmp(comando, "uc", 2) == 0){ //TODO
+				sscanf(comando, "uc %d %s", &led, ledcolor);
 				setUnits(led, ledcolor);
 			}else if(strcmp(comando, "quit") != 0){
 				printf("\ncomando errato\n");
