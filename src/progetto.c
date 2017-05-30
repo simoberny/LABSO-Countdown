@@ -50,6 +50,20 @@ void l(int a,char*b){
 
 /* __________________________________________________*/
 
+void gpioInita(){
+	//gpio init	
+	#if (defined TARGET)
+		for(int i=0; i<7; i++){
+			wiringPiSetup () ;
+	  		pinMode (gpioTens[i], OUTPUT);
+	  		digitalWrite (gpioTens[i], HIGH);
+	  		pinMode (gpioUnits[i], OUTPUT);
+	  		digitalWrite (gpioUnits[i], HIGH);		
+		}	
+	#endif  
+}
+
+
 void creazionePipe(){
 	//PIPE DI LETTURA DECINE
 	unlink("tens_pipe_in");
@@ -164,6 +178,8 @@ void stop(){
 	if(getExPid("units") != 0){
 		write (fd_units_out, "stop", strlen("stop") + 1);
 	}
+
+	gpioInita();
 }
 
 void printTens(){
@@ -230,24 +246,16 @@ void pipeHandler(int sig){
 	//printf("tentato di scrivere su una pipe vuota");
 }
 
+
 int main(int argc, char *argv[]){
 	//system("killall -s SIGKILL units 2>&1");
 	//system("killall -s SIGKILL tens 2>&1");
 	
 	void pipeHandler (int);
 	signal (SIGPIPE, pipeHandler);
-
-	//gpio init	
-	#if (defined TARGET)
-		for(int i=0; i<7; i++){
-			wiringPiSetup () ;
-	  		pinMode (gpioTens[i], OUTPUT);
-	  		digitalWrite (gpioTens[i], HIGH);
-	  		pinMode (gpioUnits[i], OUTPUT);
-	  		digitalWrite (gpioUnits[i], HIGH);		
-		}	
-	#endif  
 	
+	gpioInita();
+
 	char comando[100];
 	int secondi = -1;
 	int led;
