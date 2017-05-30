@@ -15,7 +15,7 @@ help:
 
 #Elimina file oggetto e assets nella cartella build
 clean:
-	@rm -rf build && if [ -d "assets" ]; then rm -rf assets; fi && echo "Build e Assets eliminate! "
+	@rm -rf build && if [ -d "assets" ]; then rm -rf assets; fi && echo "\033[92m - Clean eseguito con successo! \033[0m"
 
 #Deve creare la cartella build con dentro il file eseguibile
 build: $(SDIR)/progetto.c $(SDIR)/units.c $(SDIR)/tens.c
@@ -25,20 +25,22 @@ build: $(SDIR)/progetto.c $(SDIR)/units.c $(SDIR)/tens.c
 	$(CC) $(SDIR)/units.c -o units && \
 	mv countdown  build/ && \
 	mv tens build/ && \
-	mv units build/
+	mv units build/ && \
+	echo "\033[92m - Compilazione terminata con successo! \033[0m"
 
 #OPZIONALE - Chiama build e crea una cartella assets con i file di supporto
 assets:  
-	@mkdir assets && make build && \
+	@mkdir assets && make -s build && \
 	for units in 1 2 3 4 5 6 7; do \
 		touch assets/units_led_$$units ; \
 	done && \
 	for tens in 1 2 3 4 5 6 7; do \
 		touch assets/tens_led_$$tens ; \
-	done
+	done && \
+	echo "\033[92m - Assets creati! \033[0m"
 		
 	
-#OPZIONALE - Esegue il progetto in modalità TEST richiamando prima "assets"
+#OPZIONALE - Esegue il progetto in modalità TEST richiamando prima "assets" e chiedendo i secondi da bash
 test: 
-	@make assets && \
+	@make -s assets && \
 	read -p "Inserire secondi:" secondi; cd build && ./countdown $$secondi
