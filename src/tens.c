@@ -5,6 +5,8 @@
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
 
+#include <wiringPi.h>
+
 #define READ 0
 #define WRITE 1
 
@@ -16,6 +18,8 @@ pid_t pidFiglio[7];
 int fds[7][2];
 
 const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
+const int gpioTens[7]={3,12,30,14,13,0,2}; //mappa i pin gpio con i segmenti
+
 
 int getExPid(char* process){
 	char comand[29];
@@ -36,9 +40,22 @@ void countHandler (int sig) {
 		//printf("\nDecremento decine: %d\n", decine);
 	}
 
+	for(int i = 0; i < 7; i++){		
+		char m[100];	
+		sprintf(m, "n %d non non", decine);
+		write(fds[i][WRITE], m, strlen(m) + 1);		
+
+	//////gipo decremento!
+		wiringPiSetup () ;
+  		pinMode (gpioTens[i], OUTPUT);
+  		digitalWrite (gpioTens[i], !segmenti[decine][i]);
+
+  	}
+
 	if(decine == 0){
-		kill(getExPid("units"), 18);
+		kill(getExPid("units"), 18);		
 		closeAll();
+
 	}
 }
 
@@ -68,7 +85,8 @@ void creazioneFigli(char ** argv){
 			strcpy(stato, "off");
 			strcpy(colore, "red");
 
-			while (1){
+			while (1){							
+				
 				int bytesRead;
 				while((bytesRead = read(fds[i][READ], messag, 100)) > 0){
 					int valore=0;
@@ -81,10 +99,12 @@ void creazioneFigli(char ** argv){
 						}else{
 							strcpy(stato, "off");
 						}
+						
 
 						char directory[100];
 						sprintf(directory, "../assets/tens_led_%d", i);
-
+											
+						
 						fd=fopen(directory, "w");
 
 						if(fd != NULL){
@@ -97,7 +117,7 @@ void creazioneFigli(char ** argv){
 						}else if(strcmp(comando, "Color") == 0){
 							strcpy(colore, tmpColor);
 							printf("Colore settato: %s\n", colore);
-						}
+						}						
 					}
 				}
 			}
@@ -132,6 +152,7 @@ void closeAll(){
 
 
 int main(int argc, char ** argv){
+
 	char decine_str[10];
 
 	char str[100];
@@ -180,7 +201,7 @@ int main(int argc, char ** argv){
 			sprintf(richiesta, "Color %s", readcolor);
 		}
 
-		for(int i = 0; i < 7; i++){
+		for(int i = 0; i < 7; i++){			
 			if(led == i){
 				sprintf(msgPip, "n %d %s", decine, richiesta);
 				led = -1;
@@ -188,6 +209,13 @@ int main(int argc, char ** argv){
 				sprintf(msgPip, "n %d non non", decine);
 			}
 			write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
+			
+			//////gipo !
+			wiringPiSetup () ;
+			pinMode (gpioTens[i], OUTPUT);
+			digitalWrite (gpioTens[i], !segmenti[decine][i]);
+			
+			
 		}
 	}
 }

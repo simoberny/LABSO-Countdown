@@ -5,11 +5,15 @@
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
 #include <unistd.h>
+#include <time.h>
+
+#include <wiringPi.h>
 
 #define READ 0
 #define WRITE 1
 
 int unita = -1;
+int unita_res = 0;
 int decine = 1;
 int fd_units_in;
 int fd_units_out;
@@ -17,7 +21,11 @@ int fd_units_out;
 pid_t pidFiglio[7];
 int fds[7][2];
 
+time_t end, start;
+
 const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
+const int gpioUnits[7]={16,1,21,23,25,15,22}; //mappa i pin gpio con i segmenti
+
 
 int getExPid(char* process){
 	char comand[29];
@@ -33,7 +41,7 @@ int getExPid(char* process){
 
 void countHandler (int sig) { // Funzione che gestisce il segnale che manda le decine quando sono finite
 	decine = 0; // Permette alle unità di eseguire un ultimo ciclo;
-	sleep(1);
+	//sleep(1);
 }
 
 void creazioneFigli(char ** argv){
@@ -70,6 +78,8 @@ void creazioneFigli(char ** argv){
 				while((bytesRead = read(fds[i][READ], messag, 100)) > 0){
 					int valore=0;
 					int led = 0;
+					
+											
 
 					if(strncmp(messag, "n", 1) == 0){
 						sscanf(messag, "n %d %s %s", &valore, comando, tmpColor);
@@ -82,7 +92,8 @@ void creazioneFigli(char ** argv){
 						// Salvo lo stato del segmento su file
 						char directory[100];
 						sprintf(directory, "../assets/units_led_%d", i);
-
+					
+						
 						fd=fopen(directory, "w");
 
 						if(fd != NULL){
@@ -106,7 +117,7 @@ void creazioneFigli(char ** argv){
 		}	
 	}
 
-	void countHandler (int);
+	void countHandler (int);		//quando ho creato i figli creo l'handler SOLO sul padre!!!!!
 	signal (18, countHandler);
 }
 
@@ -129,7 +140,7 @@ void closeAll(){
 	exit(0);
 }
 
-int main(int argc, char ** argv){
+int main(int argc, char ** argv){	
 	char unita_str[10];
 
 	char str[100];
@@ -159,6 +170,7 @@ int main(int argc, char ** argv){
 			if(strncmp(message, "units", 5) == 0){
 				sscanf(message, "units %d", &unita);
 				creazioneFigli(argv);
+				start = time(NULL);
 			}else if(strcmp(message, "elapsed") == 0){
 				sprintf(unita_str, "%d", unita);
 				write (fd_units_out, unita_str, strlen(unita_str) + 1);
@@ -180,15 +192,16 @@ int main(int argc, char ** argv){
 			}
 		}
 
-		if(decine > 0){			
-			if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
-				kill(getExPid("tens"), 17);
-				unita = 10; // E aggiorno le unità per ripartire
-			}
-		}
+		
+	
 
-		if(unita > 0){ //Se ci sono unità le decremento 
-			for(int i = 0; i < 7; i++){
+		if(unita >=0){ //Se ci sono unità le decremento			
+			for(int i = 0; i < 7; i++){	
+
+				wiringPiSetup ();
+  				pinMode (gpioUnits[i], OUTPUT);			
+				digitalWrite (gpioUnits[i], !segmenti[unita][i]);
+				
 				if(led == i){
 					sprintf(msgPip, "n %d %s", unita, richiesta);
 					led = -1;
@@ -198,15 +211,41 @@ int main(int argc, char ** argv){
 				write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
 			}
 
-			sleep(1);
-			unita -= 1;
-		}
 
+			usleep(100000);
+			//sleep(1);
+			end=time(NULL);
+			
+			if(end-start>=1){
+				
+			if(decine > 0){			
+				if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
+					kill(getExPid("tens"), 17);			
+				}
+			}
+				
+				if(unita==0){							
+					unita = 9;
+				}else{				
+					unita -= 1;
+				}
+				start = end;
+			}
+				
+		}
+ 
 		if(decine == 0 && unita == 0){
 			printf("timer completato\n");
-			//printf("pid padre: %d   PID DA getExPid: %d\n", getpid(), getExPid("units"));
+
+			for(int i = 0; i < 7; i++){	
+					wiringPiSetup ();
+  					pinMode (gpioUnits[i], OUTPUT);			
+					digitalWrite (gpioUnits[i], !segmenti[unita][i]);
+				}
+
 			closeAll();
 		}
+		
 	}
 }
 

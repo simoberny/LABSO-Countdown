@@ -5,7 +5,8 @@
 #include <sys/types.h>
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
-#include "progetto.h"
+
+#include <wiringPi.h>
 
 #define C(x) ((_[*n-'0'])>>s)&m&x
 #define P putchar
@@ -16,9 +17,15 @@ int fd_tens_out;
 int fd_units_in;
 int fd_units_out;
 
+
+const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
+const int gpioTens[7]={3,12,30,14,13,0,2}; //mappa i pin gpio con i segmenti
+const int gpioUnits[7]={16,1,21,23,25,15,22}; //mappa i pin gpio con i segmenti
+
 /*   Codice per generazione 7 segmenti a schermo    */
 
 unsigned _[]={476,144,372,436,184,428,492,148,508,188};
+
 
 void p(int a,char*n,unsigned m,int s){
 	for(;isdigit(*n);++n){
@@ -211,9 +218,22 @@ void setUnits(int led, char * color){
 }
 
 int main(int argc, char *argv[]){
-	/*system("killall -s SIGKILL units 2>&1");
-	system("killall -s SIGKILL tens 2>&1");*/
+	//system("killall -s SIGKILL units 2>&1");
+	//system("killall -s SIGKILL tens 2>&1");
+	
+	//gpio init///////	
+		
+	for(int i=0; i<7; i++){
 
+		wiringPiSetup () ;
+  		pinMode (gpioTens[i], OUTPUT);
+  		digitalWrite (gpioTens[i], HIGH);
+  		pinMode (gpioUnits[i], OUTPUT);
+  		digitalWrite (gpioUnits[i], HIGH);		
+	}		
+	
+	
+	
 	char comando[100];
 	int secondi = -1;
 	int led;
@@ -238,10 +258,12 @@ int main(int argc, char *argv[]){
 	}
 
 	do{	
-		sleep(1);
-		printf("\nComandi disponibili: \n-start <secondi>: Avvio countdown\n-elapsed: Secondi rimasti\n-stop: Ferma il conto alla rovescia\n-tens: Decine\n-units: Unità\n-tensled info <n>\n-unitsled info <n>\n-tensled color <n> <color>\n-unitsled color <n> <color>\n-quit\n");
+		
+		usleep(200000);
+		printf("\n	Comandi disponibili: \n	-start <secondi>: Avvio countdown\n	-elapsed: Secondi rimasti\n	-stop: Ferma il conto alla rovescia\n	-tens: Decine\n	-units: Unità\n	-tensled info <n>\n	-unitsled info <n>\n	-tensled color <n> <color>\n	-unitsled color <n> <color>\n	-quit\n");
 		printf("-----------------\n Run \n-----------------\n");
 		if (fgets (comando , 100 , stdin) != NULL ){
+			system("clear");
 			int l= strlen(comando);//togliamo l' invio che prende dentro in automatico
 			comando[l-1] = '\0';
 			
