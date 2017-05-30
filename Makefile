@@ -1,5 +1,6 @@
 ODIR = build
 SDIR = src
+secondi = 0
 sistema := "Linux"
 CC := gcc
 
@@ -39,4 +40,5 @@ assets:
 	
 #OPZIONALE - Esegue il progetto in modalità TEST richiamando prima "assets"
 test: 
-	@make assets && echo "TESTING" && cd build && ./countdown 35
+	@make assets && \
+	read -p "Inserire secondi:" secondi; cd build && ./countdown $$secondi
