@@ -3,15 +3,14 @@
 #include <string.h>
 #include <ctype.h>
 #include <sys/types.h>
-#include <sys/stat.h> /* For S_IFIFO */
+#include <sys/stat.h>
+#include <sys/unistd.h>
 #include <fcntl.h>
+#include <signal.h>
 
 #if (defined TARGET)
 	#include <wiringPi.h>
 #endif  
-
-#define C(x) ((_[*n-'0'])>>s)&m&x
-#define P putchar
 
 int fd_tens_in;
 int fd_tens_out;
@@ -19,14 +18,16 @@ int fd_tens_out;
 int fd_units_in;
 int fd_units_out;
 
-
 const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
 const int gpioTens[7]={3,12,30,14,13,0,2}; //mappa i pin gpio con i segmenti
 const int gpioUnits[7]={16,1,21,23,25,15,22}; //mappa i pin gpio con i segmenti
 
 /*   Codice per generazione 7 segmenti a schermo    */
 
-unsigned _[]={476,144,372,436,184,428,492,148,508,188};
+#define C(x) ((_[*n-'0'])>>s)&m&x
+#define P putchar
+
+unsigned int _[]={476,144,372,436,184,428,492,148,508,188};
 
 
 void p(int a,char*n,unsigned m,int s){
@@ -37,7 +38,7 @@ void p(int a,char*n,unsigned m,int s){
 		}
 		P(C(2)?'|':' ');
 	}
-		P('\n');
+	P('\n');
 }
 void l(int a,char*b){
 	p(a,b,7,0);int i=1;
@@ -45,7 +46,7 @@ void l(int a,char*b){
 	for(;i<a;++i)p(a,b,3,6);p(a,b,7,6);
 }
 
-/*****************************************************/
+/* __________________________________________________*/
 
 void creazionePipe(){
 	//PIPE DI LETTURA DECINE
@@ -100,6 +101,8 @@ void start(int sec){
 
 	int unita = sec%10;
 	int decine = (sec)/10;
+
+	printf("\nConto alla rovescia di %d iniziato!\n", sec);
 
 	sprintf(strout_tens, "tens %d", decine);
 	sprintf(strout_units, "units %d", unita);
@@ -219,12 +222,18 @@ void setUnits(int led, char * color){
 	}
 }
 
+void pipeHandler(int sig){
+	//printf("tentato di scrivere su una pipe vuota");
+}
+
 int main(int argc, char *argv[]){
 	//system("killall -s SIGKILL units 2>&1");
 	//system("killall -s SIGKILL tens 2>&1");
 	
-	//gpio init///////	
-		
+	void pipeHandler (int);
+	signal (SIGPIPE, pipeHandler);
+
+	//gpio init	
 	#if (defined TARGET)
 		for(int i=0; i<7; i++){
 
@@ -234,9 +243,7 @@ int main(int argc, char *argv[]){
 	  		pinMode (gpioUnits[i], OUTPUT);
 	  		digitalWrite (gpioUnits[i], HIGH);		
 		}	
-	#endif  	
-	
-	
+	#endif  
 	
 	char comando[100];
 	int secondi = -1;
@@ -274,7 +281,6 @@ int main(int argc, char *argv[]){
 			if(strncmp(comando, "start", 5) == 0){
 				sscanf(comando, "start %d", &secondi);
 				if(secondi>-1&&secondi<60){
-					printf("\nConto alla rovescia di %d iniziato!\n", secondi);
 					start(secondi);
 				}else{
 					printf("\nInserire un tempo valido\n");				

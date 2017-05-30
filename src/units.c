@@ -4,8 +4,9 @@
 #include <sys/types.h>
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
-#include <unistd.h>
+#include <sys/unistd.h>
 #include <time.h>
+#include <signal.h>
 
 #if (defined TARGET)
 	#include <wiringPi.h>
@@ -29,6 +30,16 @@ const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,
 const int gpioUnits[7]={16,1,21,23,25,15,22}; //mappa i pin gpio con i segmenti
 
 
+void closeAll(){
+	for(int i = 0; i < 7; i++){
+		kill(pidFiglio[i], SIGKILL);
+	}
+	close(fd_units_in);
+	close (fd_units_out);
+	unlink("units_pipe_out");
+	exit(0);
+}
+
 int getExPid(char* process){
 	char comand[29];
 	sprintf(comand, "pidof -s %s", process);
@@ -38,12 +49,11 @@ int getExPid(char* process){
 	while (fgets(buf, sizeof(buf), ls) != 0) {
 	}
 	pclose(ls);
-	return buf;
+	return atoi(buf);
 }
 
 void countHandler (int sig) { // Funzione che gestisce il segnale che manda le decine quando sono finite
 	decine = 0; // Permette alle unità di eseguire un ultimo ciclo;
-	//sleep(1);
 }
 
 void creazioneFigli(char ** argv){
@@ -118,7 +128,7 @@ void creazioneFigli(char ** argv){
 	}
 
 	void countHandler (int);		//quando ho creato i figli creo l'handler SOLO sul padre!!!!!
-	signal (18, countHandler);
+	signal (SIGUSR2, countHandler);
 }
 
 int readLine(int fd, char *str){
@@ -128,16 +138,6 @@ int readLine(int fd, char *str){
 	}while(n>0 && *str++ != '\0');
 
 	return n>0;
-}
-
-void closeAll(){
-	for(int i = 0; i < 7; i++){
-		kill(pidFiglio[i], 9);
-	}
-	close(fd_units_in);
-	close (fd_units_out);
-	unlink("units_pipe_out");
-	exit(0);
 }
 
 int main(int argc, char ** argv){	
@@ -222,7 +222,7 @@ int main(int argc, char ** argv){
 				
 			if(decine > 0){			
 				if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
-					kill(getExPid("tens"), 17);			
+					kill(getExPid("tens"), SIGUSR1);			
 				}
 			}
 				
@@ -237,7 +237,9 @@ int main(int argc, char ** argv){
 		}
  
 		if(decine == 0 && unita == 0){
-			printf("timer completato\n");
+			printf("Timer completato!\n");
+
+			kill(getExPid("tens"), SIGKILL);
 
 			#if (defined TARGET)
 				for(int i = 0; i < 7; i++){	

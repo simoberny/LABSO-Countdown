@@ -4,6 +4,8 @@
 #include <sys/types.h>
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
+#include <sys/unistd.h>
+#include <signal.h>
 
 #if (defined TARGET)
 	#include <wiringPi.h>
@@ -23,6 +25,16 @@ const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,
 const int gpioTens[7]={3,12,30,14,13,0,2}; //mappa i pin gpio con i segmenti
 
 
+void closeAll(){
+	for(int i = 0; i < 7; i++){
+		kill(pidFiglio[i], SIGKILL);
+	}
+	close(fd_tens_in);
+	close (fd_tens_out);
+	unlink("tens_pipe_out");
+	exit(0);
+}
+
 int getExPid(char* process){
 	char comand[29];
 	sprintf(comand, "pidof -s %s", process);
@@ -33,7 +45,11 @@ int getExPid(char* process){
    	 	//printf("\n PID ( %s ) : %s", process, buf);
 	}
 	pclose(ls);
-	return buf;
+	return atoi(buf);
+}
+
+void killHandler(int sig){
+	closeAll();
 }
 
 void countHandler (int sig) {
@@ -57,9 +73,7 @@ void countHandler (int sig) {
   	}
 
 	if(decine == 0){
-		kill(getExPid("units"), 18);		
-		closeAll();
-
+		kill(getExPid("units"), SIGUSR2);		
 	}
 }
 
@@ -80,6 +94,7 @@ void creazioneFigli(char ** argv){
 
 			int argv0size = strlen(argv[0]);
 			strncpy(argv[0], "figliotens", argv0size);
+
 			char messag[100];
 			char comando[100];
 			char tmpColor[50];
@@ -130,8 +145,13 @@ void creazioneFigli(char ** argv){
 		}	
 	}
 
+	//Handler per gestire la diminuzione delle decine
 	void countHandler (int);
-	signal (17, countHandler);
+	signal (SIGUSR1, countHandler);
+
+	//Handler per gestire la fine del countdown
+	void killHandler (int);
+	signal (SIGKILL, killHandler);
 }
 
 int readLine(int fd, char *str){
@@ -142,16 +162,6 @@ int readLine(int fd, char *str){
 	}while(n>0 && *str++ != '\0');
 
 	return n>0;
-}
-
-void closeAll(){
-	for(int i = 0; i < 7; i++){
-		kill(pidFiglio[i], 9);
-	}
-	close(fd_tens_in);
-	close (fd_tens_out);
-	unlink("tens_pipe_out");
-	exit(0);
 }
 
 
@@ -183,7 +193,7 @@ int main(int argc, char ** argv){
 			sscanf(message, "tens %d", &decine);
 			creazioneFigli(argv);
 			if(decine == 0){
-				kill(getExPid("units"), 18);
+				kill(getExPid("units"), SIGUSR2);
 				closeAll();
 			}	// unità già nell' ultimo giro, decine gia finite (tutti i casi val <10)
 		}else if(strcmp(message, "elapsed") == 0){
