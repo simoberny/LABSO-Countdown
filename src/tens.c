@@ -193,9 +193,8 @@ int main(int argc, char ** argv){
 			sscanf(message, "tens %d", &decine);
 			creazioneFigli(argv);
 			if(decine == 0){
-				kill(getExPid("units"), SIGUSR2);
-				closeAll();
-			}	// unità già nell' ultimo giro, decine gia finite (tutti i casi val <10)
+				kill(getExPid("units"), SIGUSR2);				
+			}
 		}else if(strcmp(message, "elapsed") == 0){
 			sprintf(decine_str, "%d", decine);
 			write (fd_tens_out, decine_str, strlen(decine_str) + 1);
