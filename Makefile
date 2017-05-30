@@ -1,5 +1,12 @@
 ODIR = build
 SDIR = src
+sistema := "Linux"
+CC := gcc
+
+ifeq ($(findstring arm, $(shell uname -m)), arm)
+   sistema := "Rasp"
+   CC := gcc-6 -DTARGET=RASP -lwiringPi
+endif
 
 #Stampa informazioni gruppo e progetto
 help: 
@@ -10,11 +17,11 @@ clean:
 	@rm -rf build && if [ -d "assets" ]; then rm -rf assets; fi && echo "Build e Assets eliminate! "
 
 #Deve creare la cartella build con dentro il file eseguibile
-build: $(SDIR)/progetto.c $(SDIR)/progetto.h $(SDIR)/units.c $(SDIR)/tens.c
+build: $(SDIR)/progetto.c $(SDIR)/units.c $(SDIR)/tens.c
 	@mkdir build && \
-	gcc -w $(SDIR)/progetto.c $(SDIR)/progetto.h -o countdown && \
-	gcc -w $(SDIR)/tens.c -o tens && \
-	gcc -w $(SDIR)/units.c -o units && \
+	$(CC) $(SDIR)/progetto.c -o countdown && \
+	$(CC) $(SDIR)/tens.c -o tens && \
+	$(CC) $(SDIR)/units.c -o units && \
 	mv countdown  build/ && \
 	mv tens build/ && \
 	mv units build/
