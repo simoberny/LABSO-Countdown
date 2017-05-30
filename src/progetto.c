@@ -12,6 +12,8 @@
 	#include <wiringPi.h>
 #endif  
 
+//Dichiarazioni pipe
+
 int fd_tens_in;
 int fd_tens_out;
 
@@ -62,6 +64,7 @@ void creazionePipe(){
 	fd_units_in = open ("units_pipe_in", O_NONBLOCK);
 }
 
+//Elimina tutte le pipe
 void closePipe(){
 	close (fd_tens_out);
 	close(fd_tens_in);
@@ -80,6 +83,7 @@ int readLine(int fd, char *str){
 	return n>0;
 }
 
+//Funzione che dato un nome restituisce un PID
 int getExPid(char* process){
 	char comand[29];
 	sprintf(comand, "pidof -s %s", process);
@@ -236,7 +240,6 @@ int main(int argc, char *argv[]){
 	//gpio init	
 	#if (defined TARGET)
 		for(int i=0; i<7; i++){
-
 			wiringPiSetup () ;
 	  		pinMode (gpioTens[i], OUTPUT);
 	  		digitalWrite (gpioTens[i], HIGH);
@@ -263,7 +266,6 @@ int main(int argc, char *argv[]){
 			fd=fopen("../assets/testmode.txt", "ab+");
 			fprintf(fd, "%d", secimp);
 			fclose(fd);
-
 			start(secimp);
 		}
 	}
@@ -272,10 +274,10 @@ int main(int argc, char *argv[]){
 		
 		usleep(200000);
 		printf("\n	Comandi disponibili: \n	-start <secondi>: Avvio countdown\n	-elapsed: Secondi rimasti\n	-stop: Ferma il conto alla rovescia\n	-tens: Decine\n	-units: Unità\n	-tensled info <n>\n	-unitsled info <n>\n	-tensled color <n> <color>\n	-unitsled color <n> <color>\n	-quit\n");
-		printf("-----------------\n Run \n-----------------\n");
+		printf("-----------------\n Comando > ");
 		if (fgets (comando , 100 , stdin) != NULL ){
 			system("clear");
-			int l= strlen(comando);//togliamo l' invio che prende dentro in automatico
+			int l= strlen(comando);//togliamo l'invio che prende dentro in automatico
 			comando[l-1] = '\0';
 			
 			if(strncmp(comando, "start", 5) == 0){
@@ -293,16 +295,16 @@ int main(int argc, char *argv[]){
 				printTens();
 			}else if(strcmp(comando, "units") == 0){
 				printUnits();
-			}else if(strncmp(comando, "tensled info", 12) == 0){ //TODO
+			}else if(strncmp(comando, "tensled info", 12) == 0){
 				sscanf(comando, "tensled info %d", &led);
 				getTens(led);
-			}else if(strncmp(comando, "unitsled info", 13) == 0){ //TODO
+			}else if(strncmp(comando, "unitsled info", 13) == 0){
 				sscanf(comando, "unitsled info %d", &led);
 				getUnits(led);
-			}else if(strncmp(comando, "tensled color", 13) == 0){ //TODO
+			}else if(strncmp(comando, "tensled color", 13) == 0){
 				sscanf(comando, "tensled color %d %s", &led, ledcolor);
 				setTens(led, ledcolor);
-			}else if(strncmp(comando, "unitsled color", 14) == 0){ //TODO
+			}else if(strncmp(comando, "unitsled color", 14) == 0){
 				sscanf(comando, "unitsled color %d %s", &led, ledcolor);
 				setUnits(led, ledcolor);
 			}else if(strcmp(comando, "quit") != 0){
