@@ -5,7 +5,9 @@
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
 
-#include <wiringPi.h>
+#if (defined TARGET)
+	#include <wiringPi.h>
+#endif  
 
 #define READ 0
 #define WRITE 1
@@ -45,10 +47,12 @@ void countHandler (int sig) {
 		sprintf(m, "n %d non non", decine);
 		write(fds[i][WRITE], m, strlen(m) + 1);		
 
-	//////gipo decremento!
-		wiringPiSetup () ;
-  		pinMode (gpioTens[i], OUTPUT);
-  		digitalWrite (gpioTens[i], !segmenti[decine][i]);
+		#if (defined TARGET)
+			//gipo decremento!
+			wiringPiSetup () ;
+	  		pinMode (gpioTens[i], OUTPUT);
+	  		digitalWrite (gpioTens[i], !segmenti[decine][i]);
+  		#endif
 
   	}
 
@@ -210,11 +214,12 @@ int main(int argc, char ** argv){
 			}
 			write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
 			
-			//////gipo !
-			wiringPiSetup () ;
-			pinMode (gpioTens[i], OUTPUT);
-			digitalWrite (gpioTens[i], !segmenti[decine][i]);
-			
+			#if (defined TARGET)
+				//gipo !
+				wiringPiSetup () ;
+				pinMode (gpioTens[i], OUTPUT);
+				digitalWrite (gpioTens[i], !segmenti[decine][i]);
+			#endif
 			
 		}
 	}

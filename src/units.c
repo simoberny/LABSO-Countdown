@@ -7,7 +7,9 @@
 #include <unistd.h>
 #include <time.h>
 
-#include <wiringPi.h>
+#if (defined TARGET)
+	#include <wiringPi.h>
+#endif  
 
 #define READ 0
 #define WRITE 1
@@ -78,8 +80,6 @@ void creazioneFigli(char ** argv){
 				while((bytesRead = read(fds[i][READ], messag, 100)) > 0){
 					int valore=0;
 					int led = 0;
-					
-											
 
 					if(strncmp(messag, "n", 1) == 0){
 						sscanf(messag, "n %d %s %s", &valore, comando, tmpColor);
@@ -198,10 +198,12 @@ int main(int argc, char ** argv){
 		if(unita >=0){ //Se ci sono unità le decremento			
 			for(int i = 0; i < 7; i++){	
 
-				wiringPiSetup ();
-  				pinMode (gpioUnits[i], OUTPUT);			
-				digitalWrite (gpioUnits[i], !segmenti[unita][i]);
-				
+				#if (defined TARGET)
+					wiringPiSetup ();
+	  				pinMode (gpioUnits[i], OUTPUT);			
+					digitalWrite (gpioUnits[i], !segmenti[unita][i]);
+				#endif
+
 				if(led == i){
 					sprintf(msgPip, "n %d %s", unita, richiesta);
 					led = -1;
@@ -213,7 +215,7 @@ int main(int argc, char ** argv){
 
 
 			usleep(100000);
-			//sleep(1);
+
 			end=time(NULL);
 			
 			if(end-start>=1){
@@ -237,11 +239,13 @@ int main(int argc, char ** argv){
 		if(decine == 0 && unita == 0){
 			printf("timer completato\n");
 
-			for(int i = 0; i < 7; i++){	
+			#if (defined TARGET)
+				for(int i = 0; i < 7; i++){	
 					wiringPiSetup ();
-  					pinMode (gpioUnits[i], OUTPUT);			
+					pinMode (gpioUnits[i], OUTPUT);			
 					digitalWrite (gpioUnits[i], !segmenti[unita][i]);
 				}
+			#endif
 
 			closeAll();
 		}

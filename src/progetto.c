@@ -6,7 +6,9 @@
 #include <sys/stat.h> /* For S_IFIFO */
 #include <fcntl.h>
 
-#include <wiringPi.h>
+#if (defined TARGET)
+	#include <wiringPi.h>
+#endif  
 
 #define C(x) ((_[*n-'0'])>>s)&m&x
 #define P putchar
@@ -223,14 +225,16 @@ int main(int argc, char *argv[]){
 	
 	//gpio init///////	
 		
-	for(int i=0; i<7; i++){
+	#if (defined TARGET)
+		for(int i=0; i<7; i++){
 
-		wiringPiSetup () ;
-  		pinMode (gpioTens[i], OUTPUT);
-  		digitalWrite (gpioTens[i], HIGH);
-  		pinMode (gpioUnits[i], OUTPUT);
-  		digitalWrite (gpioUnits[i], HIGH);		
-	}		
+			wiringPiSetup () ;
+	  		pinMode (gpioTens[i], OUTPUT);
+	  		digitalWrite (gpioTens[i], HIGH);
+	  		pinMode (gpioUnits[i], OUTPUT);
+	  		digitalWrite (gpioUnits[i], HIGH);		
+		}	
+	#endif  	
 	
 	
 	
