@@ -4,8 +4,12 @@ secondi = 0
 sistema := "Linux"
 CC := gcc
 
+
+#Controllo l'architettura per la compilazione
 ifeq ($(findstring arm, $(shell uname -m)), arm)
    sistema := "Rasp"
+   #DTARGET abilita la parte del codice riferita alla libreria wiringPi
+   #NOTA: Versioni datate di gcc(ad esempio la 4.9 preinstallata su Raspberry) hanno problemi con le PIPE
    CC := gcc-6 -DTARGET=RASP -lwiringPi
 endif
 
