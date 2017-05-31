@@ -31,10 +31,10 @@ build: $(SDIR)/progetto.c $(SDIR)/units.c $(SDIR)/tens.c
 #OPZIONALE - Chiama build e crea una cartella assets con i file di supporto
 assets:  
 	@mkdir assets && make -s build && \
-	for units in 1 2 3 4 5 6 7; do \
+	for units in 0 1 2 3 4 5 6; do \
 		touch assets/units_led_$$units ; \
 	done && \
-	for tens in 1 2 3 4 5 6 7; do \
+	for tens in 0 1 2 3 4 5 6; do \
 		touch assets/tens_led_$$tens ; \
 	done && \
 	echo "\033[92m - Assets creati! \033[0m"
