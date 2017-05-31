@@ -259,7 +259,11 @@ int main(int argc, char ** argv){
 			if(end-start>=1){	
 				if(decine > 0){			
 					if(unita == 0){ // Se le decine sono > 0 e sono arrivato a 0 con le unità invio segnale alle decine per decrementarsi
-						kill(getExPid("tens"), SIGUSR1);			
+						if(getExPid("tens") != 0){
+							kill(getExPid("tens"), SIGUSR1);
+						}else{
+							closeAll();
+						}
 					}
 				}
 				
@@ -278,7 +282,9 @@ int main(int argc, char ** argv){
 			printf("Timer completato!\n");
 
 			//Viene inviato un segnale a tens per terminare la sua esecuzione
-			kill(getExPid("tens"), SIGKILL);
+			if(getExPid("tens") != 0){
+				kill(getExPid("tens"), SIGKILL);
+			}
 
 			#if (defined TARGET)
 				int i;

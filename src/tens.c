@@ -91,7 +91,11 @@ void countHandler (int sig) {
 
   	//Se le decine arrivano a 0 il processo invia un segnale alle unità per avvertirle di eseguire l'ultimo conteggio
 	if(decine == 0){
-		kill(getExPid("units"), SIGUSR2);		
+		if(getExPid("units") != 0){
+			kill(getExPid("units"), SIGUSR2);	
+		}else{
+			closeAll();
+		}
 	}
 }
 
@@ -235,7 +239,11 @@ int main(int argc, char ** argv){
 
 			//Se le decine inserite sono già 0 viene inviato subito il segnale alle unità
 			if(decine == 0){
-				kill(getExPid("units"), SIGUSR2);				
+				if(getExPid("units") != 0){
+					kill(getExPid("units"), SIGUSR2);
+				}else{
+					closeAll();
+				}				
 			}
 		}else if(strcmp(message, "elapsed") == 0){
 			sprintf(decine_str, "%d", decine);
