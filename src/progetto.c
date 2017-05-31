@@ -8,6 +8,8 @@
 #include <fcntl.h>
 #include <signal.h>
 
+#define ANSI_COLOR_RED "\x1b[31m"
+
 #if (defined TARGET)
 	#include <wiringPi.h>
 #endif  
@@ -50,13 +52,13 @@ void l(int a,char*b){
 	int i=1;
 	for(;i<a;++i){
 		p(a,b,3,3);
-		p(a,b,7,3);
-		i=1;
 	}
+	p(a,b,7,3);
+	i=1;
 	for(;i<a;++i){
 		p(a,b,3,6);
-		p(a,b,7,6);
 	}
+	p(a,b,7,6);
 }
 /* __________________________________________________*/
 
@@ -291,7 +293,7 @@ int main(int argc, char *argv[]){
 	//Se al programma vengono passati i secondi attraverso la console, questi vengono salvati in un file
 	if(argc > 1){
 		secimp = atoi(argv[1]);
-		if(secimp > -1 && secimp < 60){
+		if(secimp > 0 && secimp < 60){
 			fd=fopen("../assets/testmode.txt", "ab+");
 			fprintf(fd, "%d", secimp);
 			fclose(fd);
@@ -305,7 +307,7 @@ int main(int argc, char *argv[]){
 		//Piccolo ritardo per visualizzare il risultato dei figli prima del menu dinamico
 		usleep(200000);
 		printf("\n	Comandi disponibili: \n	-start <secondi>: Avvio countdown\n	-elapsed: Secondi rimasti\n	-stop: Ferma il conto alla rovescia\n	-tens: Decine\n	-units: Unità\n	-tensled info <n>\n	-unitsled info <n>\n	-tensled color <n> <color>\n	-unitsled color <n> <color>\n	-quit\n");
-		printf("-----------------\n Comando > ");
+		printf("-----------------\n \x1b[36m Comando > \x1b[0m");
 		if (fgets (comando , 100 , stdin) != NULL ){
 			system("clear");
 			int l= strlen(comando);//togliamo l'invio che prende dentro in automatico
@@ -313,10 +315,10 @@ int main(int argc, char *argv[]){
 			
 			if(strncmp(comando, "start", 5) == 0){
 				sscanf(comando, "start %d", &secondi);
-				if(secondi>-1&&secondi<60){
+				if(secondi>0&&secondi<60){
 					start(secondi);
 				}else{
-					printf("\nInserire un tempo valido\n");				
+					printf("\x1b[31m \nInserire un tempo valido\n \x1b[0m");				
 				}
 			}else if(strcmp(comando, "elapsed") == 0){
 				elapsed();
@@ -339,13 +341,14 @@ int main(int argc, char *argv[]){
 				sscanf(comando, "unitsled color %d %s", &led, ledcolor);
 				setUnits(led, ledcolor);
 			}else if(strcmp(comando, "quit") != 0){
-				printf("\ncomando errato\n");
+				printf("\x1b[31m \nComando errato\n \x1b[0m");
 			}
 		}
 		
 		//Ciclo console dinamica eseguita fino alla ricezione del comando "quit"
 	}while(!(strcmp(comando, "quit") == 0));
 
+	stop();
 	closePipe();
 
 	return 0;

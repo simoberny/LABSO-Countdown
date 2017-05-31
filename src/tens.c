@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/stat.h> /* For S_IFIFO */
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <sys/unistd.h>
 #include <signal.h>
 
-//Se la dafinizione TARGET esiste, creata se il make rileva un sistema Raspberry, include la libreria per raspberry
+//La definizione TARGET viene abilitata dal makefile in base alla piattaforma rilevata
 #if (defined TARGET)
 	//Libreria utilizzata da Raspberry
 	#include <wiringPi.h>
@@ -21,15 +21,22 @@ int fd_tens_in;
 int fd_tens_out;
 
 pid_t pidFiglio[7];
+
+//Vettore di file descriptor per gestire le pipe anonime dei segmenti
 int fds[7][2];
 
-//Vettore con la funzione di tradurre un numero nel suo corrispettivo a 7 segmenti
+//Matrice che dato il numero di decine e il segmento restituisce lo stato (on/off)
 const int segmenti[10][7]={{1,1,1,1,1,1,0},{0,1,1,0,0,0,0},{1,1,0,1,1,0,1},{1,1,1,1,0,0,1},{0,1,1,0,0,1,1},{1,0,1,1,0,1,1},{1,0,1,1,1,1,1},{1,1,1,0,0,0,0,},{1,1,1,1,1,1,1},{1,1,1,1,0,1,1}};  //matrice che mappa ogni  segmento(riga) con ogni numero(colonna)
-const int gpioTens[7]={3,12,30,14,13,0,2}; //mappa i pin della libreria wiring con i segmenti per le decine
+//mappa i pin della libreria wiring con i segmenti per le decine
+const int gpioTens[7]={3,12,30,14,13,0,2}; 
 
 //Funzione che chiude tutte le pipe, elimina tutti i processi figli relativi ai segmenti e termina il processo corrente
 void closeAll(){
 	for(int i = 0; i < 7; i++){
+		char closing[100];
+		sprintf(closing, "n 0 non non");
+		write(fds[i][WRITE], closing, strlen(closing) + 1);
+		usleep(100000);
 		kill(pidFiglio[i], SIGKILL);
 	}
 	close(fd_tens_in);
@@ -38,7 +45,7 @@ void closeAll(){
 	exit(0);
 }
 
-//Funzione che dato il nome di un processo restituisce un PID
+//Funzione che dato il nome di un processo restituisce il suo PID, 0 altrimenti
 int getExPid(char* process){
 	char comand[29];
 	sprintf(comand, "pidof -s %s", process);
@@ -52,12 +59,12 @@ int getExPid(char* process){
 	return atoi(buf);
 }
 
-//Handler che viene chiamato quando arriva il segnale inviato dal processo units che termina 
+//Handler che viene eseguito quando arriva il segnale inviato dal processo units quando termina
 void killHandler(int sig){
 	closeAll();
 }
 
-//Handler che viene chiamato quando il processo units arriva a 0 e invia il segnale alla decine affinchè si decrementino 
+//Handler che decrementa le decine quando le unità arrivano a 0
 void countHandler (int sig) {
 	//Se ci sono ancora decine vengono decrementate
 	if(decine > 0){
@@ -70,7 +77,7 @@ void countHandler (int sig) {
 		sprintf(m, "n %d non non", decine);
 		write(fds[i][WRITE], m, strlen(m) + 1);		
 
-		//Aggiornamento 7 segmenti sempre se la definizione Target esiste
+		//Aggiornamento 7 segmenti
 		#if (defined TARGET)
 			//gipo decremento!
 			wiringPiSetup () ;
@@ -80,7 +87,7 @@ void countHandler (int sig) {
 
   	}
 
-  	//Se le decine arrivano a 0 il processo invia un segnale alle unità per avvertirle che il successivo è l'ultimo conteggio che devono eseguire
+  	//Se le decine arrivano a 0 il processo invia un segnale alle unità per avvertirle di eseguire l'ultimo conteggio
 	if(decine == 0){
 		kill(getExPid("units"), SIGUSR2);		
 	}
@@ -88,9 +95,7 @@ void countHandler (int sig) {
 
 //Funzione che crea i 7 figli per gestire i singoli segmenti
 void creazioneFigli(char ** argv){
-
 	int pid;
-
 	for(int i = 0; i<7; i++){
 
 		//Creazione pipe anonima per ogni figlio
@@ -101,7 +106,7 @@ void creazioneFigli(char ** argv){
 		pidFiglio[i] = pid;
 
 		if (pid==0){
-			//Processo figlio numero #i
+			//Processo figlio #i
 
 			unlink("tens_pipe_out");
 			close(fd_tens_in);
@@ -117,7 +122,7 @@ void creazioneFigli(char ** argv){
 			char comando[100];
 			char tmpColor[50];
 
-			//Variabile per salvare lo stato del segmento: "OFF se spento", "#COLORE se acceso"
+			//Variabile per salvare lo stato del segmento: "OFF se spento", "COLORE se acceso"
 			char stato[50];
 
 			//Variabile che salva il colore del segmento indipendentemente dallo stato
@@ -136,7 +141,7 @@ void creazioneFigli(char ** argv){
 					int led = 0;
 
 					if(strncmp(messag, "n", 1) == 0){
-						//Salvo il valore delle decine attuali, il comando richiesto se richiesto e un eventuale colore da settare
+						//Salvo il valore delle decine attuali, il comando richiesto (se presente) e un eventuale colore da settare
 						sscanf(messag, "n %d %s %s", &valore, comando, tmpColor);
 
 						//Controllo se questo segmento (Figlio #i) è acceso dato il numero attuale
@@ -148,10 +153,8 @@ void creazioneFigli(char ** argv){
 
 						//Salvo lo stato del segmento su file, nella cartella assets
 						char directory[100];
-						sprintf(directory, "../assets/tens_led_%d", i);
-											
+						sprintf(directory, "../assets/tens_led_%d", i);					
 						fd=fopen(directory, "w");
-
 						if(fd != NULL){
 							fprintf(fd, "%s\n", stato);
   							fclose(fd);
@@ -168,10 +171,11 @@ void creazioneFigli(char ** argv){
 					}
 				}
 			}
-
 			exit(0);
 		}	
 	}
+
+	//NOTA: Handler dichiarati solo per il padre
 
 	//Handler per gestire la diminuzione delle decine
 	void countHandler (int);
@@ -226,7 +230,7 @@ int main(int argc, char ** argv){
 			//Vengono creati i 7 figli che gestiscono i segmenti
 			creazioneFigli(argv);
 
-			//Se le decine inserite sono già 0 viene inviato subito il segnale
+			//Se le decine inserite sono già 0 viene inviato subito il segnale alle unità
 			if(decine == 0){
 				kill(getExPid("units"), SIGUSR2);				
 			}
@@ -249,19 +253,18 @@ int main(int argc, char ** argv){
 			sprintf(richiesta, "Color %s", readcolor);
 		}
 
-		//Per ogni segmento viene generata la richiesta da effettuare 
+		//Per ogni segmento viene generata e inviata la richiesta da effettuare sulla rispettiva pipe anonima
 		for(int i = 0; i < 7; i++){			
 			if(led == i){
 				sprintf(msgPip, "n %d %s", decine, richiesta);
 				led = -1;
 			}else{
-				//Se non c'è nessuna richiesta vengono semplicemente inviate le decine attuali
-				//Al posto della richiesta vengono inseriti due semplici "-" per skippare la richiesta
-				sprintf(msgPip, "n %d - -", decine);
+				//Se non c'è nessuna richiesta (info #segmento o color #segmento colore) vengono semplicemente inviate le decine attuali
+				sprintf(msgPip, "n %d non non", decine);
 			}
 			write(fds[i][WRITE], msgPip, strlen(msgPip) + 1);
 			
-			//Settaggio iniziale dei 7 segmenti
+			//Settaggio dei 7 segmenti
 			#if (defined TARGET)
 				wiringPiSetup();
 				pinMode (gpioTens[i], OUTPUT);
