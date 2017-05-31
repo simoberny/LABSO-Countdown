@@ -37,7 +37,8 @@ const int gpioUnits[7]={16,1,21,23,25,15,22};
 
 //Funzione che chiude tutte le pipe, elimina tutti i processi figli relativi ai segmenti e termina il processo corrente
 void closeAll(){
-	for(int i = 0; i < 7; i++){
+	int i;
+	for(i = 0; i < 7; i++){
 		char closing[100];
 		sprintf(closing, "n 0 non non");
 		write(fds[i][WRITE], closing, strlen(closing) + 1);
@@ -71,7 +72,8 @@ void countHandler (int sig) {
 //Funzione che crea i 7 figli per gestire i singoli segmenti
 void creazioneFigli(char ** argv){
 	int pid;
-	for(int i = 0; i<7; i++){
+	int i;
+	for(i = 0; i<7; i++){
 		//Creazione pipe anonima per ogni figlio
 		pipe(fds[i]);
 		pid = fork();
@@ -128,7 +130,7 @@ void creazioneFigli(char ** argv){
 
 						// Salvo lo stato del segmento su file
 						char directory[100];
-						sprintf(directory, "../assets/units_led_%d", i);
+						sprintf(directory, "../assets/units_led_%d", i+1);
 						fd=fopen(directory, "w");
 						if(fd != NULL){
 							fprintf(fd, "%s\n", stato);
@@ -137,11 +139,11 @@ void creazioneFigli(char ** argv){
 
 						if(strcmp(comando, "Info") == 0){
 							//Richiesta stato segmento
-							printf("Stato LED Unità %d: %s \n",i, stato);
+							printf("Stato LED Unità %d: %s \n",i+1, stato);
 						}else if(strcmp(comando, "Color") == 0){
 							//Setto il colore di un dato segmento
 							strcpy(colore, tmpColor);
-							printf("Colore segmento %d settato a: %s\n", i, colore);
+							printf("Colore segmento %d settato a: %s\n", i+1, colore);
 						}
 					}
 				}
@@ -211,7 +213,8 @@ int main(int argc, char ** argv){
 				closeAll();
 			}else if(strcmp(message, "print") == 0){
 				char a = 'a';
-				for(int i = 0; i < 7; i++){
+				int i;
+				for(i = 0; i < 7; i++){
 					a = 'a' + i;
 					printf("%c: %d\n",a,segmenti[unita][i]);
 				}
@@ -226,8 +229,9 @@ int main(int argc, char ** argv){
 
 		if(unita >=0){ //Se ci sono unità le decremento	
 
-			//Per ogni segmento viene generata e inviata la richiesta da effettuare sulla rispettiva pipe anonima		
-			for(int i = 0; i < 7; i++){	
+			//Per ogni segmento viene generata e inviata la richiesta da effettuare sulla rispettiva pipe anonima	
+			int i;	
+			for(i = 0; i < 7; i++){	
 
 				//Settaggio dei 7 segmenti
 				#if (defined TARGET)
@@ -262,7 +266,7 @@ int main(int argc, char ** argv){
 				if(unita==0){							
 					unita = 9;
 				}else{				
-					unita -= 1; 
+					unita -= (end-start); 
 				}
 				start = end;
 			}
@@ -277,7 +281,8 @@ int main(int argc, char ** argv){
 			kill(getExPid("tens"), SIGKILL);
 
 			#if (defined TARGET)
-				for(int i = 0; i < 7; i++){	
+				int i;
+				for(i = 0; i < 7; i++){	
 					wiringPiSetup ();
 					pinMode (gpioUnits[i], OUTPUT);			
 					digitalWrite (gpioUnits[i], !segmenti[unita][i]);

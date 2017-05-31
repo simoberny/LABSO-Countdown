@@ -32,7 +32,8 @@ const int gpioTens[7]={3,12,30,14,13,0,2};
 
 //Funzione che chiude tutte le pipe, elimina tutti i processi figli relativi ai segmenti e termina il processo corrente
 void closeAll(){
-	for(int i = 0; i < 7; i++){
+	int i;
+	for(i = 0; i < 7; i++){
 		char closing[100];
 		sprintf(closing, "n 0 non non");
 		write(fds[i][WRITE], closing, strlen(closing) + 1);
@@ -72,7 +73,8 @@ void countHandler (int sig) {
 	}
 
 	//Aggiornamento dei singoli segmenti inviando le decine al processi figli
-	for(int i = 0; i < 7; i++){		
+	int i;
+	for(i = 0; i < 7; i++){		
 		char m[100];	
 		sprintf(m, "n %d non non", decine);
 		write(fds[i][WRITE], m, strlen(m) + 1);		
@@ -96,7 +98,8 @@ void countHandler (int sig) {
 //Funzione che crea i 7 figli per gestire i singoli segmenti
 void creazioneFigli(char ** argv){
 	int pid;
-	for(int i = 0; i<7; i++){
+	int i;
+	for(i = 0; i<7; i++){
 
 		//Creazione pipe anonima per ogni figlio
 		pipe(fds[i]);
@@ -153,7 +156,7 @@ void creazioneFigli(char ** argv){
 
 						//Salvo lo stato del segmento su file, nella cartella assets
 						char directory[100];
-						sprintf(directory, "../assets/tens_led_%d", i);					
+						sprintf(directory, "../assets/tens_led_%d", i+1);					
 						fd=fopen(directory, "w");
 						if(fd != NULL){
 							fprintf(fd, "%s\n", stato);
@@ -162,11 +165,11 @@ void creazioneFigli(char ** argv){
 				
 						if(strcmp(comando, "Info") == 0){
 							//Richiesta stato segmento
-							printf("Stato LED Decine%d: %s \n",i, stato);
+							printf("Stato LED Decine%d: %s \n", i+1, stato);
 						}else if(strcmp(comando, "Color") == 0){
 							//Setto il colore di un dato segmento
 							strcpy(colore, tmpColor);
-							printf("Colore settato: %s\n", colore);
+							printf("Colore segmento %d settato a: %s\n", i+1, colore);
 						}						
 					}
 				}
@@ -241,7 +244,8 @@ int main(int argc, char ** argv){
 			closeAll();
 		}else if(strcmp(message, "print") == 0){
 			char a = 'a';
-			for(int i = 0; i < 7; i++){
+			int i;
+			for(i = 0; i < 7; i++){
 				a = 'a' + i;
 				printf("%c: %d\n",a,segmenti[decine][i]);
 			}
@@ -254,7 +258,8 @@ int main(int argc, char ** argv){
 		}
 
 		//Per ogni segmento viene generata e inviata la richiesta da effettuare sulla rispettiva pipe anonima
-		for(int i = 0; i < 7; i++){			
+		int i;
+		for(i = 0; i < 7; i++){			
 			if(led == i){
 				sprintf(msgPip, "n %d %s", decine, richiesta);
 				led = -1;

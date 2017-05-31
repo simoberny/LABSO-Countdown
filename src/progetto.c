@@ -33,12 +33,12 @@ const int gpioUnits[7]={16,1,21,23,25,15,22}; //mappa i pin della libreria wirin
 
 unsigned _[]={476,144,372,436,184,428,492,148,508,188};
 
-
 void p(int a,char*n,unsigned m,int s){
 	for(;isdigit(*n);++n){
 		P(C(1)?'|':' ');
 
-		for(int i=0;i<a;++i){
+		int i;
+		for(i=0;i<a;++i){
 			P(C(4)?'_':' ');
 		}
 
@@ -65,7 +65,8 @@ void l(int a,char*b){
 //Inizializza tutti i pin della gpio come uscite e setta il loro valore a alto(7 Segmenti a catodo comune)
 void gpioInita(){
 	#if (defined TARGET)
-		for(int i=0; i<7; i++){
+		int i;
+		for(i=0; i<7; i++){
 			wiringPiSetup () ;
 	  		pinMode (gpioTens[i], OUTPUT);
 	  		digitalWrite (gpioTens[i], HIGH);
@@ -218,10 +219,10 @@ void printUnits(){
 
 //Dato il segmento restituisce il suo stato
 void getTens(int led){
-	if(led >= 0 && led < 7){
+	if(led > 0 && led <= 7){
 		if(getExPid("tens") != 0){
 			char message[100];
-			sprintf(message, "info %d", led);
+			sprintf(message, "info %d", led-1);
 			write (fd_tens_out, message, strlen(message) + 1);
 		}
 	}else{
@@ -231,10 +232,10 @@ void getTens(int led){
 
 //Dato il segmento e un colore setta il colore di quel segmento
 void setTens(int led, char * color){
-	if(led >= 0 && led < 7){
+	if(led > 0 && led <= 7){
 		if(getExPid("tens") != 0){
 			char message[100];
-			sprintf(message, "color %d %s", led, color);
+			sprintf(message, "color %d %s", led-1, color);
 			write (fd_tens_out, message, strlen(message) + 1);
 		}
 	}else{
@@ -244,10 +245,10 @@ void setTens(int led, char * color){
 
 //Dato il segmento restituisce il suo stato
 void getUnits(int led){
-	if(led >= 0 && led < 7){
+	if(led > 0 && led <= 7){
 		if(getExPid("units") != 0){
 			char message[100];
-			sprintf(message, "info %d", led);
+			sprintf(message, "info %d", led-1);
 			write (fd_units_out, message, strlen(message) + 1);
 		}
 	}else{
@@ -257,10 +258,10 @@ void getUnits(int led){
 
 //Dato il segmento e un colore setta il colore di quel segmento
 void setUnits(int led, char * color){
-	if(led >= 0 && led < 7){
+	if(led > 0 && led <= 7){
 		if(getExPid("units") != 0){
 			char message[100];
-			sprintf(message, "color %d %s", led, color);
+			sprintf(message, "color %d %s", led-1, color);
 			write (fd_units_out, message, strlen(message) + 1);
 		}
 	}else{
@@ -272,10 +273,19 @@ void pipeHandler(int sig){
 	//printf("tentato di scrivere su una pipe vuota");
 }
 
+void ctrlc(int sig){
+	printf("\nProgramma terminato!\n");
+	stop();
+	usleep(100000);
+	exit(0);
+}
 
 int main(int argc, char *argv[]){	
 	void pipeHandler (int);
 	signal (SIGPIPE, pipeHandler);
+
+	void ctrlc (int);
+	signal (SIGINT, ctrlc);
 	
 	gpioInita();
 
@@ -315,8 +325,12 @@ int main(int argc, char *argv[]){
 			
 			if(strncmp(comando, "start", 5) == 0){
 				sscanf(comando, "start %d", &secondi);
-				if(secondi>0&&secondi<60){
-					start(secondi);
+				if(secondi > 0 && secondi < 60){
+					if(getExPid("tens") == 0 && getExPid("unita") == 0){
+						start(secondi);
+					}else{
+						printf("\x1b[31m Timer già avviato!\n \x1b[0m");
+					}
 				}else{
 					printf("\x1b[31m \nInserire un tempo valido\n \x1b[0m");				
 				}
